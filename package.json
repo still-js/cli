@@ -1,0 +1,21 @@
+{
+  "name": "still-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./bin/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bin": {
+    "still": "./bin/index.js"
+  },
+  "dependencies": {
+    "commander": "13.1.0",
+    "yocto-spinner": "0.2.1",
+    "yoctocolors": "2.1.1"
+  }
+}
