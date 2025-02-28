@@ -11,7 +11,8 @@
   "author": "",
   "license": "MIT",
   "bin": {
-    "still": "./bin/index.js"
+    "still": "./bin/index.js",
+    "st": "./bin/index.js"
   },
   "dependencies": {
     "commander": "13.1.0",
