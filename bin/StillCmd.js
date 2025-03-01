@@ -4,6 +4,7 @@ import fs from 'fs';
 import yocto from 'yocto-spinner';
 import colors from 'yoctocolors';
 import { FileHelper } from './helper/FileHelper.js';
+import { RouterHelper } from './helper/RouterHelper.js';
 
 export class StillCmd {
 
@@ -110,7 +111,20 @@ export class StillCmd {
                     const cmpFullPath = FileHelper.createComponentFile(
                         cmpName, rootFolder, dirPath, fileName
                     );
+
                     spinnerObj.success(`Component ${cmpFullPath} created successfully`);
+
+                    const routeSpinner = yocto({ text: `Creating the route` }).start();
+                    const addRoute = RouterHelper.updateProjectRoutes(routeFile, cmpName, cmpFullPath);
+                    if (addRoute)
+                        routeSpinner.success(`New route added with path ${cmpFullPath}`);
+                    else {
+                        routeSpinner.error(`
+                            Failed to a route for ${cmpName}, 
+                            you can anyway add it manually in the route.map.js file
+                        `);
+                    }
+
                     this.newCmdLine();
 
                 } catch (error) {
