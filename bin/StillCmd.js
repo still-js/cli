@@ -3,15 +3,13 @@ import { Command, program } from 'commander';
 import fs from 'fs';
 import yocto from 'yocto-spinner';
 import colors from 'yoctocolors';
+import { FileHelper } from './helper/FileHelper.js';
 
 export class StillCmd {
 
     /** @type { Command } */
     program;
     static stillProjectRootDir = [];
-    rootFiles = [
-        '@still', 'app-setup.js', 'app-template.js', 'index.html', 'route.map.js'
-    ];
 
     constructor() {
 
@@ -96,38 +94,22 @@ export class StillCmd {
         const fileMetadata = { cmpPath, cmpName };
         this.cmdMessage(`\n  Component will be created at ${cmpPath != '' ? cmpPath.join('/') : './'}/`);
 
-        await this.getRootDirAndParseCmpCreation(fileMetadata, spinner, null,
+        await this.getRootDirThenRunCallback(fileMetadata, spinner, null,
 
-            async ({ cmpPath, cmpName }, spinnerObj) => {
+            async ({ cmpPath, cmpName, routeFile }, spinnerObj) => {
 
                 const rootFolder = StillCmd.stillProjectRootDir.join('/');
-                let folder, dirPath;
+                const {
+                    dirPath,
+                    fileName
+                } = await FileHelper.parseDirTree(cmpPath, cmpName);
 
-                if (cmpPath != '') {
-                    folder = cmpPath.shift();
-                    dirPath = `${folder ? folder : ''}`;
-                }
-
-                while (folder) {
-
-                    const folderExists = fs.existsSync(dirPath);
-                    if (!folderExists) fs.mkdirSync(dirPath);
-
-                    folder = cmpPath.shift();
-                    if (folder) dirPath = `${dirPath}/${folder}`;
-                    await this.sleepFor(200);
-                }
-
-                const fileName = String(cmpName[0]).toUpperCase() + String(cmpName.slice(1));
-                const cmpContent = this.componentModel(fileName, rootFolder);
 
                 try {
 
-                    const isValidDir = dirPath != '' && dirPath != undefined;
-                    const cmpDirPath = isValidDir ? dirPath : '';
-                    const cmpFullPath = `${isValidDir ? cmpDirPath + '/' : ''}${fileName}.js`;
-
-                    fs.writeFileSync(`${cmpFullPath}`, cmpContent);
+                    const cmpFullPath = FileHelper.createComponentFile(
+                        cmpName, rootFolder, dirPath, fileName
+                    );
                     spinnerObj.success(`Component ${cmpFullPath} created successfully`);
                     this.newCmdLine();
 
@@ -183,27 +165,8 @@ export class StillCmd {
         this.newCmdLine();
     }
 
-    componentTemplate = (cmpName, superClsPath) =>
-        'import { ViewComponent } from ' + superClsPath
-        + '\nexport class ' + cmpName + ' extends ViewComponent {\n'
-        + '\n'
-        + '\tconstructor(){\n'
-        + '\t\tsuper();'
-        + '\n'
-        + '\t}\n'
-        + '\n'
-        + '\n'
-        + '}';
+    async getRootDirThenRunCallback(fileMetadata, spinner, dir, cb, callNum = 0) {
 
-
-    componentModel(cmpName, importPath) {
-        const superClsPath = `"${importPath}/@still/component/super/ViewComponent.js";`;
-        return this.componentTemplate(cmpName, superClsPath);
-    }
-
-    async getRootDirAndParseCmpCreation(fileMetadata, spinner, dir, cb, callNum = 0) {
-
-        let counter = 0;
         let enteredPath = fileMetadata.cmpPath.length ? fileMetadata.cmpPath.join('/') : '';
         let actualDir = dir || (`${process.cwd()}/${enteredPath}`);
         if (!fs.existsSync(actualDir + '/')) {
@@ -213,23 +176,18 @@ export class StillCmd {
             actualDir = newDirPath.join('/');
             StillCmd.stillProjectRootDir.push('..');
 
-            this.getRootDirAndParseCmpCreation(fileMetadata, spinner, `${actualDir}`, cb, (callNum + 1));
+            this.getRootDirThenRunCallback(fileMetadata, spinner, `${actualDir}`, cb, (callNum + 1));
             return;
         }
 
         this.cmdMessage(`  Serching project root folder ${actualDir}`);
-        const files = fs.readdirSync(actualDir);
 
-        for (const file of files) {
-            if (this.rootFiles.includes(file)) counter++;
-        }
-
-        if (counter == this.rootFiles.length) {
+        if (FileHelper.wasRootFolderReached(actualDir)) {
             this.cmdMessage(`  Found project root folder`);
-            await cb(fileMetadata, spinner);
+            await cb({ ...fileMetadata, routeFile: `${actualDir}/route.map.js` }, spinner);
         } else {
             StillCmd.stillProjectRootDir.push('..');
-            await this.getRootDirAndParseCmpCreation(fileMetadata, spinner, `${actualDir}/..`, cb, (callNum + 1));
+            await this.getRootDirThenRunCallback(fileMetadata, spinner, `${actualDir}/..`, cb, (callNum + 1));
             return;
         }
 
@@ -241,10 +199,6 @@ export class StillCmd {
 
     cmdMessage(msg) {
         console.log(`${msg}`);
-    }
-
-    async sleepFor(ms) {
-        return new Promise(r => setTimeout(() => r(''), ms));
     }
 
 }
