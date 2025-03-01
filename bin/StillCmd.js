@@ -8,18 +8,12 @@ export class StillCmd {
 
     /** @type { Command } */
     program;
-    stillProjectRootDir = '';
+    static stillProjectRootDir = [];
     rootFiles = [
         '@still', 'app-setup.js', 'app-template.js', 'index.html', 'route.map.js'
     ];
 
     constructor() {
-
-        //console.log(`Running from `, process.cwd());
-        const files = fs.readdirSync(process.cwd());
-        files.forEach(file => {
-            console.log(`Curr file: `, file);
-        })
 
         this.program = program;
         this.program.version('0.1');
@@ -68,8 +62,8 @@ export class StillCmd {
 
     createNewProject(opts) {
 
-        console.log(``);
-        console.log(`New project (${colors.bold(opts.create[0])}) creation initiated:`);
+        this.newCmdLine();
+        this.cmdMessage(`New project (${colors.bold(opts.create[0])}) creation initiated:`);
         const spinner = yocto({ text: 'Downloading StillJS' });
         spinner.start();
         /**
@@ -78,11 +72,11 @@ export class StillCmd {
         setTimeout(() => {
 
             spinner.stop();
-            console.log(``);
-            console.log(`\tProject ${opts.create[1]} created successfully`);
+            this.newCmdLine();
+            this.cmdMessage(`\tProject ${opts.create[1]} created successfully`);
             spinner.success();
-            console.log(`\t- type ${colors.bold(colors.green('npm run dev'))}  to open in the browser`);
-            console.log(``);
+            this.cmdMessage(`\t- type ${colors.bold(colors.green('npm run dev'))}  to open in the browser`);
+            this.newCmdLine();
 
         }, 2000);
 
@@ -90,27 +84,62 @@ export class StillCmd {
 
     async createNewComponent(opts) {
 
-        this.getRootDirAndParseCmpCreation(null, () => {
+        StillCmd.stillProjectRootDir = [];
+        this.newCmdLine();
+        const spinner = yocto({ text: `Creating new component ${opts.create[1]}` });
+        spinner.start();
 
-            /* while(true){
-                return;
-            } */
-            const cmpName = opts.create[1];
-            const fileName = String(cmpName[0]).toUpperCase() + String(cmpName.slice(1));
-            const cmpContent = this.componentModel(fileName, this.stillProjectRootDir);
+        let cmpName = opts.create[1];
+        let cmpPath = cmpName.split('/');
+        cmpName = cmpPath.at(-1), cmpPath.pop();
 
-            const spinner = yocto({ text: `Creating new component ${fileName}` });
-            spinner.start();
+        const fileMetadata = { cmpPath, cmpName };
+        this.cmdMessage(`\n  Component will be created at ${cmpPath != '' ? cmpPath.join('/') : './'}/`);
 
-            try {
-                fs.writeFileSync(`${fileName}.js`, cmpContent);
-                console.log(`\nWill create new component for `, fileName);
-                spinner.success();
-            } catch (error) {
-                spinner.error('Erro on creating component: ' + fileName);
-            }
+        await this.getRootDirAndParseCmpCreation(fileMetadata, spinner, null,
 
-        });
+            async ({ cmpPath, cmpName }, spinnerObj) => {
+
+                const rootFolder = StillCmd.stillProjectRootDir.join('/');
+                let folder, dirPath;
+
+                if (cmpPath != '') {
+                    folder = cmpPath.shift();
+                    dirPath = `${folder ? folder : ''}`;
+                }
+
+                while (folder) {
+
+                    const folderExists = fs.existsSync(dirPath);
+                    if (!folderExists) fs.mkdirSync(dirPath);
+
+                    folder = cmpPath.shift();
+                    if (folder) dirPath = `${dirPath}/${folder}`;
+                    await this.sleepFor(200);
+                }
+
+                const fileName = String(cmpName[0]).toUpperCase() + String(cmpName.slice(1));
+                const cmpContent = this.componentModel(fileName, rootFolder);
+
+                try {
+
+                    const isValidDir = dirPath != '' && dirPath != undefined;
+                    const cmpDirPath = isValidDir ? dirPath : '';
+                    const cmpFullPath = `${isValidDir ? cmpDirPath + '/' : ''}${fileName}.js`;
+
+                    fs.writeFileSync(`${cmpFullPath}`, cmpContent);
+                    spinnerObj.success(`Component ${cmpFullPath} created successfully`);
+                    this.newCmdLine();
+
+                } catch (error) {
+
+                    spinnerObj.error('Erro on creating component: ' + fileName);
+                    this.cmdMessage(error.message);
+                    this.newCmdLine();
+
+                }
+
+            });
 
     }
 
@@ -121,14 +150,13 @@ export class StillCmd {
         setTimeout(() => {
 
             spinner.stop();
-            console.log(``);
-            console.log(`\t${opts.install} installed successfully`);
+            this.newCmdLine();
+            this.cmdMessage(`\t${opts.install} installed successfully`);
             spinner.success();
             //console.log(`\t- type ${colors.bold(colors.green('npm run dev'))}  to open in the browser`);
-            console.log(``);
+            this.newCmdLine();
 
         }, 2000);
-
         //this.runInstallStillPkg();
     }
 
@@ -150,46 +178,73 @@ export class StillCmd {
     }
 
     showGenericHelp() {
-        console.log(``);
-        console.log(`Type still -h/--help to know what optionss are provided`);
-        console.log(``);
+        this.newCmdLine();
+        this.cmdMessage(`Type still -h/--help to know what optionss are provided`);
+        this.newCmdLine();
     }
+
+    componentTemplate = (cmpName, superClsPath) =>
+        'import { ViewComponent } from ' + superClsPath
+        + '\nexport class ' + cmpName + ' extends ViewComponent {\n'
+        + '\n'
+        + '\tconstructor(){\n'
+        + '\t\tsuper();'
+        + '\n'
+        + '\t}\n'
+        + '\n'
+        + '\n'
+        + '}';
+
 
     componentModel(cmpName, importPath) {
-
-        //@still/component/super/ViewComponent.js
-        const superClsPath = `"${importPath}@still/component/super/ViewComponent.js";`;
-        const template = 'import { ViewComponent } from ' + superClsPath
-            + '\nexport class ' + cmpName + ' extends ViewComponent {\n'
-            + '\n'
-            + '\tconstructor(){\n'
-            + '\t\tsuper();'
-            + '\n'
-            + '\t}\n'
-            + '\n'
-            + '\n'
-            + '}';
-        return template;
-
+        const superClsPath = `"${importPath}/@still/component/super/ViewComponent.js";`;
+        return this.componentTemplate(cmpName, superClsPath);
     }
 
-    getRootDirAndParseCmpCreation(dir, cb, callNum = 0) {
+    async getRootDirAndParseCmpCreation(fileMetadata, spinner, dir, cb, callNum = 0) {
 
         let counter = 0;
-        const actualDir = dir || process.cwd();
+        let enteredPath = fileMetadata.cmpPath.length ? fileMetadata.cmpPath.join('/') : '';
+        let actualDir = dir || (`${process.cwd()}/${enteredPath}`);
+        if (!fs.existsSync(actualDir + '/')) {
+
+            const newDirPath = actualDir.split('/');
+            newDirPath.pop();
+            actualDir = newDirPath.join('/');
+            StillCmd.stillProjectRootDir.push('..');
+
+            this.getRootDirAndParseCmpCreation(fileMetadata, spinner, `${actualDir}`, cb, (callNum + 1));
+            return;
+        }
+
+        this.cmdMessage(`  Serching project root folder ${actualDir}`);
         const files = fs.readdirSync(actualDir);
+
         for (const file of files) {
             if (this.rootFiles.includes(file)) counter++;
         }
 
         if (counter == this.rootFiles.length) {
-            cb();
+            this.cmdMessage(`  Found project root folder`);
+            await cb(fileMetadata, spinner);
         } else {
-            console.log(`Recursion call ${(callNum + 1)} for dir ${dir}`);
-            this.stillProjectRootDir = `../${this.stillProjectRootDir}`;
-            this.getRootDirAndParseCmpCreation(`${actualDir}/..`, cb, (callNum + 1));
+            StillCmd.stillProjectRootDir.push('..');
+            await this.getRootDirAndParseCmpCreation(fileMetadata, spinner, `${actualDir}/..`, cb, (callNum + 1));
+            return;
         }
 
+    }
+
+    newCmdLine() {
+        console.log(`\n`);
+    }
+
+    cmdMessage(msg) {
+        console.log(`${msg}`);
+    }
+
+    async sleepFor(ms) {
+        return new Promise(r => setTimeout(() => r(''), ms));
     }
 
 }
