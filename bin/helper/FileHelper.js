@@ -1,4 +1,5 @@
 import fs from 'fs';
+import colors from 'yoctocolors';
 import { sleepFor } from '../util/time.js';
 
 export class FileHelper {
@@ -76,6 +77,24 @@ export class FileHelper {
         fs.writeFileSync(`${cmpFullPath}`, cmpContent);
 
         return cmpFullPath;
+
+    }
+
+    static isItRootFolder(spinner, cmdObj) {
+
+        if (FileHelper.wasRootFolderReached(process.cwd())) {
+            spinner.error(`Failed to create new component`);
+            cmdObj.cmdMessage(
+                '\n  Components ' + colors.bold(colors.red('cannot')) + ' be created from the root folder:\n\n'
+                + '\t- please enter the app folder by typing '
+                + colors.bold(colors.green('cd app'))
+                + '\n\t- Then you can create the component'
+            );
+            cmdObj.newCmdLine();
+            return true;
+        }
+
+        return false;
 
     }
 

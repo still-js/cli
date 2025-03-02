@@ -106,10 +106,12 @@ export class StillCmd {
 
     async createNewComponent(opts) {
 
+
         StillCmd.stillProjectRootDir = [];
         this.newCmdLine();
-        const spinner = yocto({ text: `Creating new component ${opts.create[1]}` });
-        spinner.start();
+        const spinner = yocto({ text: `Creating new component ${opts.create[1]}` }).start();
+
+        if (FileHelper.isItRootFolder(spinner, this)) return;
 
         let cmpName = opts.create[1];
         let cmpPath = cmpName.split('/');
