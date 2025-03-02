@@ -35,6 +35,12 @@ export class StillCmd {
                 '-r, --routes <action>',
                 'Display all existing routes\n'
                 + '- example: ' + colors.bold(colors.green('still -r list')) + '\n'
+            )
+            .option(
+                '-A, --app <action>',
+                'Allow to prosecute operation on top of the application\n'
+                + '- example: ' + colors.bold(colors.green('still -app open'))
+                + ' opens the app in the browser in the default port of 8181\n'
             );
 
         this.program.parse(process.argv);
@@ -51,6 +57,8 @@ export class StillCmd {
         else if (opts.install) await this.install(opts);
 
         else if (opts.routes) await this.listRoutes(opts);
+
+        else if (opts.app) await this.runAppOperation(opts);
 
         else this.showGenericHelp();
 
@@ -235,6 +243,30 @@ export class StillCmd {
             StillCmd.stillProjectRootDir.push('..');
             await this.getRootDirThenRunCallback(fileMetadata, spinner, `${actualDir}/..`, cb, (callNum + 1));
             return;
+        }
+
+    }
+
+    async runAppOperation(opts) {
+
+        const spinner = yocto();
+        if (opts.app == 'serve') {
+
+            spinner.text = `Startin the server`;
+            spinner.start();
+            StillCmd.silentConsoleLog = true;
+            await this.getRootDirThenRunCallback(null, spinner, null,
+                async ({ routeFile }) => FrameworkHelper.openApp(routeFile)
+            );
+            spinner.stop();
+            StillCmd.silentConsoleLog = false;
+
+        } else {
+            this.newCmdLine();
+            this.cmdMessage(`Invalid command argument ${colors.bgRed(` ${opts.app} `)}`);
+            this.newCmdLine();
+            spinner.start().error(`Failed to start the server`);
+            this.newCmdLine();
         }
 
     }
