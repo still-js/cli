@@ -67,7 +67,6 @@ export class StillCmd {
         if (isCreateComp) return await this.createNewComponent(opts)
 
         isCreateProj = this.checkCreateOption(PROJECT, cmdArgs);
-        console.log(`PROJECTS ARE: `, cmdArgs, `AND flas is ${isCreateProj}`);
         if (isCreateProj) return await this.createNewProject(opts);
 
     }
