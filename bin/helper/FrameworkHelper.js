@@ -102,5 +102,22 @@ export class FrameworkHelper {
         return platform() == 'win32';
     }
 
+    static openApp(rootPath) {
+
+        rootPath = rootPath.replace('route.map.js', '').replace('app//', 'app/');
+        const cmd = spawn(`npx live-server ${rootPath}`, [], { shell: true });
+
+        cmd.stdout.setEncoding('utf8');
+        cmd.stderr.setEncoding('utf8');
+
+        cmd.stdout.on('data', (data) => {
+            process.stdout.write(data);
+        });
+
+        cmd.stderr.on('data', (data) => {
+            process.stderr.write(data);
+        });
+    }
+
 
 }
