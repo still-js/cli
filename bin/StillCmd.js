@@ -26,6 +26,11 @@ export class StillCmd {
                 + '- example1: ' + colors.bold(colors.green('still -c pg myProj')) + ' create a project named myProj\n'
                 + '- example2: ' + colors.bold(colors.green('still -c cp MenuComponent')) + ' create a ne component with name MenuComponent \n'
                 + '\n'
+            )
+            .option(
+                '-r, --routes <action>',
+                'Display all existing routes\n'
+                + '- example: ' + colors.bold(colors.green('still -r list')) + '\n'
             );
 
         this.program.parse(process.argv);
@@ -34,12 +39,14 @@ export class StillCmd {
         (async () => await this.cmd(opts))();
     }
 
-    /** @param { { create, install } } opts */
+    /** @param { { create, install, routes } } opts */
     async cmd(opts) {
 
         if (opts.create) await this.create(opts);
 
         else if (opts.install) await this.install(opts);
+
+        else if (opts.routes) await this.listRoutes(opts);
 
         else this.showGenericHelp();
 
@@ -185,9 +192,12 @@ export class StillCmd {
         this.newCmdLine();
     }
 
+    /**
+     *  @param {{ cmpPath, cmpName, routeFile }, spinnerObj} cb 
+     */
     async getRootDirThenRunCallback(fileMetadata, spinner, dir, cb, callNum = 0) {
 
-        let enteredPath = fileMetadata.cmpPath.length ? fileMetadata.cmpPath.join('/') : '';
+        let enteredPath = fileMetadata?.cmpPath?.length ? fileMetadata.cmpPath.join('/') : '';
         let actualDir = dir || (`${process.cwd()}/${enteredPath}`);
         if (!fs.existsSync(actualDir + '/')) {
 
@@ -213,12 +223,39 @@ export class StillCmd {
 
     }
 
+    async listRoutes(opts) {
+
+        const cmdArgs = String(opts.routes);
+        let isListRoutes = cmdArgs.indexOf('list') == 0;
+        this.newCmdLine();
+        const spinner = yocto({ text: 'Searching and parsing routes...' }).start();
+        this.newCmdLine();
+        StillCmd.silentConsoleLog = true;
+
+        if (isListRoutes) {
+            await this.getRootDirThenRunCallback(null, spinner, null,
+                async ({ routeFile }, spinnerInstance) => {
+                    await RouterHelper.listRoutes(routeFile);
+                }
+            );
+        }
+
+        StillCmd.silentConsoleLog = false;
+        this.newCmdLine();
+        spinner.success(`Routes listed successfully`);
+        this.newCmdLine();
+
+    }
+
+    static silentConsoleLog = false;
     newCmdLine() {
-        console.log(`\n`);
+        if (!StillCmd.silentConsoleLog)
+            console.log(`\n`);
     }
 
     cmdMessage(msg) {
-        console.log(`${msg}`);
+        if (!StillCmd.silentConsoleLog)
+            console.log(`${msg}`);
     }
 
 }
