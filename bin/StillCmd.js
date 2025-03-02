@@ -99,6 +99,12 @@ export class StillCmd {
 
             async ({ cmpPath, cmpName, routeFile }, spinnerObj) => {
 
+                const doesCmpExists = RouterHelper.checkIfRouteExists(routeFile, cmpName);
+                if (doesCmpExists) {
+                    spinnerObj.error(`Component with name ${cmpName} already exists, please choose another name to avoid conflict`);
+                    return;
+                }
+
                 const rootFolder = StillCmd.stillProjectRootDir.join('/');
                 const {
                     dirPath,

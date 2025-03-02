@@ -15,7 +15,7 @@ export class RouterHelper {
         const vrRE = /viewRoutes/.source + complementRE.source;
         const regularRE = /regular/.source + complementRE.source;
         const re = new RegExp(vrRE + regularRE);
-        const newRoute = `${cmpName}: '${componentRoute}',\n`;
+        const newRoute = `${cmpName}: 'app/${componentRoute}',\n`;
 
         routesContent = routesContent.replace(re, (mt) => {
             return 'viewRoutes: {\nregular: {\n' + newRoute;
@@ -32,6 +32,19 @@ export class RouterHelper {
             console.log(`Error on generating the `, error.message);
             return false;
         }
+
+    }
+
+    static checkIfRouteExists(file, cmpName) {
+
+        let routesContent = fs.readFileSync(file, { encoding: 'utf-8' });
+        const complementRe = /[\n \s]{0,}:/;
+        const componentRe = new RegExp(cmpName);
+
+        const re = componentRe.source + complementRe.source;
+        const componentExists = routesContent.match(new RegExp(re));
+
+        return componentExists;
 
     }
 
