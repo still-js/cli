@@ -48,6 +48,10 @@ export class FileHelper {
         'import { ViewComponent } from ' + superClsPath
         + '\nexport class ' + cmpName + ' extends ViewComponent {\n'
         + '\n'
+        + '\tisPublic = true;'
+        + '\n'
+        + '\ttemplate = `<h1 style="width: 100%; text-align:center; margin-top:10%;">' + cmpName + '  auto generated content</h1>`;\n'
+        + '\n'
         + '\tconstructor(){\n'
         + '\t\tsuper();'
         + '\n'
