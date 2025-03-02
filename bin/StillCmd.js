@@ -1,9 +1,9 @@
-import { spawn } from 'child_process';
 import { Command, program } from 'commander';
 import fs from 'fs';
 import yocto from 'yocto-spinner';
 import colors from 'yoctocolors';
 import { FileHelper } from './helper/FileHelper.js';
+import { FrameworkHelper } from './helper/FrameworkHelper.js';
 import { RouterHelper } from './helper/RouterHelper.js';
 
 export class StillCmd {
@@ -11,6 +11,10 @@ export class StillCmd {
     /** @type { Command } */
     program;
     static stillProjectRootDir = [];
+    static createTypeOptions = {
+        'COMPONENT': 'COMPONENT',
+        'PROJECT': 'PROJECT',
+    }
 
     constructor() {
 
@@ -54,38 +58,51 @@ export class StillCmd {
 
     async create(opts) {
 
+        const { COMPONENT, PROJECT } = StillCmd.createTypeOptions;
         const cmdArgs = String(opts.create);
-        let isCreateComp = cmdArgs.indexOf('cp') == 0,
+
+        let isCreateComp = this.checkCreateOption(COMPONENT, cmdArgs),
             isCreateProj;
 
         if (isCreateComp) return await this.createNewComponent(opts)
 
-        isCreateProj = cmdArgs.indexOf('pj') == 0;
-        if (isCreateProj) return this.createNewProject(opts);
-
+        isCreateProj = this.checkCreateOption(PROJECT, cmdArgs);
+        console.log(`PROJECTS ARE: `, cmdArgs, `AND flas is ${isCreateProj}`);
+        if (isCreateProj) return await this.createNewProject(opts);
 
     }
 
-    createNewProject(opts) {
+    async createNewProject(opts) {
+
+        const helper = FrameworkHelper;
 
         this.newCmdLine();
         this.cmdMessage(`New project (${colors.bold(opts.create[0])}) creation initiated:`);
-        const spinner = yocto({ text: 'Downloading StillJS' });
-        spinner.start();
-        /**
-         * Download logic go here
-         */
-        setTimeout(() => {
+        const spinner = yocto({ text: 'Downloading StillJS from @stilljs/core' });
 
-            spinner.stop();
+        const projectName = opts.create[1];
+        const result = await helper.createNewStillProject(this, spinner, projectName);
+        if (result) {
+
+            spinner.success(`Project ${colors.bold(opts.create[1])} created`);
             this.newCmdLine();
-            this.cmdMessage(`\tProject ${opts.create[1]} created successfully`);
-            spinner.success();
-            this.cmdMessage(`\t- type ${colors.bold(colors.green('npm run dev'))}  to open in the browser`);
+            const unwrapSpinner = yocto({ text: 'Unwrapping root folder' });
+
+            try {
+                helper.unwrapStillJSFolder(projectName);
+                unwrapSpinner.success(`Process creation ran successfully`)
+            } catch (error) {
+                unwrapSpinner.error(`Error on unwrapping ${colors.bold(opts.create[1])} project`);
+            }
+
+            this.cmdMessage(`\t- type ${colors.bold(colors.green(`cd ${opts.create[1]}`))}  to enter project folder`);
+            this.cmdMessage(`\t  and then type ${colors.bold(colors.green('npm run dev'))}  to open in the browser`);
             this.newCmdLine();
 
-        }, 2000);
+        }
 
+        if (!result)
+            spinner.error(`Failed to create ${colors.bold(opts.create[1])} project`);
     }
 
     async createNewComponent(opts) {
@@ -162,34 +179,32 @@ export class StillCmd {
             this.newCmdLine();
             this.cmdMessage(`\t${opts.install} installed successfully`);
             spinner.success();
-            //console.log(`\t- type ${colors.bold(colors.green('npm run dev'))}  to open in the browser`);
             this.newCmdLine();
 
         }, 2000);
-        //this.runInstallStillPkg();
-    }
-
-    runInstallStillPkg(pkg) {
-
-        const iProcess = spawn('npm', ['i', pkg]);
-
-        iProcess.stdout.setEncoding('utf8');
-        iProcess.stderr.setEncoding('utf8');
-
-        iProcess.stdout.on('data', (data) => {
-            process.stdout.write(data);
-        });
-
-        iProcess.stderr.on('data', (data) => {
-            process.stdout.write(data);
-        });
-
     }
 
     showGenericHelp() {
         this.newCmdLine();
         this.cmdMessage(`Type still -h/--help to know what optionss are provided`);
         this.newCmdLine();
+    }
+
+    checkCreateOption(type, cmdArgs) {
+
+        if (type == StillCmd.createTypeOptions.COMPONENT) {
+            return (
+                cmdArgs.indexOf('cp') == 0
+                || cmdArgs.indexOf('component') == 0
+            )
+        }
+
+        if (type == StillCmd.createTypeOptions.PROJECT) {
+            return (
+                cmdArgs.indexOf('pj') == 0
+                || cmdArgs.indexOf('project') == 0
+            )
+        }
     }
 
     /**
