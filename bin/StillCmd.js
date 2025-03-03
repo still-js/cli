@@ -21,30 +21,48 @@ export class StillCmd {
         this.program = program;
         this.program.version('0.1');
         this.program
-            /** Install StillJS dependency */
-            .option('-i, --install <pkgname>', 'Install new dependency from NPM repository compatible with StillFramework\n')
-            /** Create new Still Project */
-            .option(
-                '-c, --create <name...>',
+            .command('create <type> <name>')
+            .description(
                 'Create a new Project or Component as bellow examples:\n'
-                + '- example1: ' + colors.bold(colors.green('still -c pg myProj')) + ' create a project named myProj\n'
-                + '- example2: ' + colors.bold(colors.green('still -c cp MenuComponent')) + ' create a ne component with name MenuComponent \n'
-                + '\n'
-            )
-            .option(
-                '-r, --routes <action>',
+                + '- example1: ' + colors.bold(colors.green('still create pg myProj')) + ' create a project named myProj\n'
+                + '- example2: ' + colors.bold(colors.green('still create cp MenuComponent')) + ' create a ne component with name MenuComponent \n'
+
+            );
+
+        this.program
+            .command('route <action>')
+            .description(
                 'Display all existing routes\n'
-                + '- example: ' + colors.bold(colors.green('still -r list')) + '\n'
-            )
-            .option(
-                '-A, --app <action>',
+                + '- example1: ' + colors.bold(colors.green('still route list')) + '\n'
+                + '- example2: ' + colors.bold(colors.green('still route l')) + '\n'
+            );
+
+        this.program
+            .command('r <action>')
+            .description(
+                'Alias to route, produces the same result\n'
+            );
+
+        this.program
+            .command('c <type> <name>')
+            .description('Alias for create, produces the same result:\n');
+
+        this.program
+            .command('app <action>')
+            .description(
                 'Allow to prosecute operation on top of the application\n'
-                + '- example: ' + colors.bold(colors.green('still -app open'))
+                + '- example: ' + colors.bold(colors.green('still app open'))
                 + ' opens the app in the browser in the default port of 8181\n'
             );
 
+        this.program
+            .command('A <action>')
+            .description(
+                'Alias for app, produces the same result:\n'
+            );
+
         this.program.parse(process.argv);
-        const opts = this.program.opts();
+        const opts = this.parseCmdType();
 
         (async () => await this.cmd(opts))();
     }
@@ -56,7 +74,7 @@ export class StillCmd {
 
         else if (opts.install) await this.install(opts);
 
-        else if (opts.routes) await this.listRoutes(opts);
+        else if (opts.route) await this.listRoutes(opts);
 
         else if (opts.app) await this.runAppOperation(opts);
 
@@ -82,16 +100,16 @@ export class StillCmd {
     async createNewProject(opts) {
 
         const helper = FrameworkHelper;
+        const projectName = opts.name;
 
         this.newCmdLine();
-        this.cmdMessage(`New project (${colors.bold(opts.create[0])}) creation initiated:`);
+        this.cmdMessage(`New project (${colors.bold(projectName)}) creation initiated:`);
         const spinner = yocto({ text: 'Downloading StillJS from @stilljs/core' });
 
-        const projectName = opts.create[1];
         const result = await helper.createNewStillProject(this, spinner, projectName);
         if (result) {
 
-            spinner.success(`Project ${colors.bold(opts.create[1])} created`);
+            spinner.success(`Project ${colors.bold(projectName)} created`);
             this.newCmdLine();
             const unwrapSpinner = yocto({ text: 'Unwrapping root folder' });
 
@@ -99,17 +117,17 @@ export class StillCmd {
                 helper.unwrapStillJSFolder(projectName);
                 unwrapSpinner.success(`Process creation ran successfully`)
             } catch (error) {
-                unwrapSpinner.error(`Error on unwrapping ${colors.bold(opts.create[1])} project`);
+                unwrapSpinner.error(`Error on unwrapping ${colors.bold(projectName)} project`);
             }
 
-            this.cmdMessage(`\t- type ${colors.bold(colors.green(`cd ${opts.create[1]}`))}  to enter project folder`);
+            this.cmdMessage(`\t- type ${colors.bold(colors.green(`cd ${projectName}`))}  to enter project folder`);
             this.cmdMessage(`\t  and then type ${colors.bold(colors.green('npm run dev'))}  to open in the browser`);
             this.newCmdLine();
 
         }
 
         if (!result)
-            spinner.error(`Failed to create ${colors.bold(opts.create[1])} project`);
+            spinner.error(`Failed to create ${colors.bold(projectName)} project`);
     }
 
     async createNewComponent(opts) {
@@ -117,11 +135,11 @@ export class StillCmd {
 
         StillCmd.stillProjectRootDir = [];
         this.newCmdLine();
-        const spinner = yocto({ text: `Creating new component ${opts.create[1]}` }).start();
+        const spinner = yocto({ text: `Creating new component ${opts.name}` }).start();
 
         if (FileHelper.isItRootFolder(spinner, this)) return;
 
-        let cmpName = opts.create[1];
+        let cmpName = opts.name;
         let cmpPath = cmpName.split('/');
         cmpName = cmpPath.at(-1), cmpPath.pop();
 
@@ -250,7 +268,7 @@ export class StillCmd {
     async runAppOperation(opts) {
 
         const spinner = yocto();
-        if (opts.app == 'serve') {
+        if (opts.action == 'serve') {
 
             spinner.text = `Startin the server`;
             spinner.start();
@@ -263,7 +281,7 @@ export class StillCmd {
 
         } else {
             this.newCmdLine();
-            this.cmdMessage(`Invalid command argument ${colors.bgRed(` ${opts.app} `)}`);
+            this.cmdMessage(`Invalid command argument ${colors.bgRed(` ${opts.action} `)}`);
             this.newCmdLine();
             spinner.start().error(`Failed to start the server`);
             this.newCmdLine();
@@ -273,8 +291,7 @@ export class StillCmd {
 
     async listRoutes(opts) {
 
-        const cmdArgs = String(opts.routes);
-        let isListRoutes = cmdArgs.indexOf('list') == 0;
+        let isListRoutes = opts.action == 'list';
         this.newCmdLine();
         const spinner = yocto({ text: 'Searching and parsing routes...' }).start();
         this.newCmdLine();
@@ -304,6 +321,23 @@ export class StillCmd {
     cmdMessage(msg) {
         if (!StillCmd.silentConsoleLog)
             console.log(`${msg}`);
+    }
+
+    parseCmdType() {
+
+        let opts;
+        const command = process.argv.slice(2);
+
+        if (command[0] == 'create' || command[0] == 'c')
+            opts = { 'create': command[1], name: command[2] };
+
+        if (command[0] == 'route' || command[0] == 'r')
+            opts = { 'route': command[0], action: command[1] };
+
+        if (command[0] == 'app' || command[0] == 'A')
+            opts = { 'app': command[0], action: command[1] };
+
+        return opts;
     }
 
 }
