@@ -2,6 +2,7 @@ import fs from 'fs';
 import colors from 'yoctocolors';
 import { sleepFor } from '../util/time.js';
 
+
 export class FileHelper {
 
     static rootFiles = [
@@ -17,7 +18,10 @@ export class FileHelper {
             if (FileHelper.rootFiles.includes(file)) counter++;
         }
 
-        return counter == FileHelper.rootFiles.length;
+        return {
+            flag: counter == FileHelper.rootFiles.length,
+            actualDir
+        };
     }
 
     static async parseDirTree(cmpPath, cmpName) {
@@ -80,21 +84,27 @@ export class FileHelper {
 
     }
 
-    static isItRootFolder(spinner, cmdObj) {
+    static isItRootFolder(spinner, cmdObj, showLog = true) {
 
-        if (FileHelper.wasRootFolderReached(process.cwd())) {
-            spinner.error(`Failed to create new component`);
-            cmdObj.cmdMessage(
-                '\n  Components ' + colors.bold(colors.red('cannot')) + ' be created from the root folder:\n\n'
-                + '\t- please enter the app folder by typing '
-                + colors.bold(colors.green('cd app'))
-                + '\n\t- Then you can create the component'
-            );
-            cmdObj.newCmdLine();
-            return true;
+        const { flag, actualDir } = FileHelper.wasRootFolderReached(process.cwd());
+
+        if (flag) {
+            if (showLog) {
+
+                spinner.error(`Failed to create new component`);
+                cmdObj.cmdMessage(
+                    '\n  Components ' + colors.bold(colors.red('cannot')) + ' be created from the root folder:\n\n'
+                    + '\t- please enter the app folder by typing '
+                    + colors.bold(colors.green('cd app'))
+                    + '\n\t- Then you can create the component'
+                );
+                cmdObj.newCmdLine();
+
+            }
+            return { flag, actualDir };
         }
 
-        return false;
+        return { flag, actualDir };
 
     }
 

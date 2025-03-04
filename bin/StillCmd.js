@@ -20,14 +20,22 @@ export class StillCmd {
 
         this.program = program;
         this.program.version('0.1');
+
         this.program
             .command('create <type> <name>')
             .description(
                 'Create a new Project or Component as bellow examples:\n'
-                + '- example1: ' + colors.bold(colors.green('still create pg myProj')) + ' create a project named myProj\n'
+                + '- example1: ' + colors.bold(colors.green('still create pj myProj')) + ' create a project named myProj\n'
                 + '- example2: ' + colors.bold(colors.green('still create cp MenuComponent')) + ' create a ne component with name MenuComponent \n'
-
             );
+
+        this.program
+            .command('install <arguments...>')
+            .description(
+                'Install new library form NPM:\n'
+                + '- example1: ' + colors.bold(colors.green('still install @stilljs/tabulator')) + ' install StillJS tabulator grid component\n'
+            );
+
 
         this.program
             .command('route <action>')
@@ -39,9 +47,7 @@ export class StillCmd {
 
         this.program
             .command('r <action>')
-            .description(
-                'Alias to route, produces the same result\n'
-            );
+            .description('Alias to route, produces the same result\n');
 
         this.program
             .command('c <type> <name>')
@@ -87,20 +93,17 @@ export class StillCmd {
         const { COMPONENT, PROJECT } = StillCmd.createTypeOptions;
         const cmdArgs = String(opts.create);
 
-        let isCreateComp = this.checkCreateOption(COMPONENT, cmdArgs),
-            isCreateProj;
-
+        const isCreateComp = this.checkCreateOption(COMPONENT, cmdArgs)
         if (isCreateComp) return await this.createNewComponent(opts)
 
-        isCreateProj = this.checkCreateOption(PROJECT, cmdArgs);
+        const isCreateProj = this.checkCreateOption(PROJECT, cmdArgs);
         if (isCreateProj) return await this.createNewProject(opts);
 
     }
 
     async createNewProject(opts) {
 
-        const helper = FrameworkHelper;
-        const projectName = opts.name;
+        const helper = FrameworkHelper, projectName = opts.name;
 
         this.newCmdLine();
         this.cmdMessage(`New project (${colors.bold(projectName)}) creation initiated:`);
@@ -132,12 +135,11 @@ export class StillCmd {
 
     async createNewComponent(opts) {
 
-
         StillCmd.stillProjectRootDir = [];
         this.newCmdLine();
         const spinner = yocto({ text: `Creating new component ${opts.name}` }).start();
 
-        if (FileHelper.isItRootFolder(spinner, this)) return;
+        if (FileHelper.isItRootFolder(spinner, this).flag) return;
 
         let cmpName = opts.name;
         let cmpPath = cmpName.split('/');
@@ -196,19 +198,36 @@ export class StillCmd {
 
     }
 
-    install(opts) {
+    async install(opts) {
 
-        const spinner = yocto({ text: 'Installing ' + (opts.install) + ' for Still framework' });
-        spinner.start();
-        setTimeout(() => {
+        const pkgName = opts.pkg, helper = FrameworkHelper;
+        const spinner = yocto({ text: `Setting up ${pkgName} instalation process` }).start();
+        const { flag } = FileHelper.isItRootFolder(spinner, this, false);
 
-            spinner.stop();
+        this.newCmdLine();
+        this.cmdMessage(`Starting instalation for (${colors.bold(pkgName)}):`);
+
+        const result = await helper.runInstallStillPkg(
+            opts.arguments, null, !flag, { spinner, cmdObj: this }
+        );
+        if (result) {
+
+            spinner.success(`Package ${colors.bold(pkgName)} installed`);
             this.newCmdLine();
-            this.cmdMessage(`\t${opts.install} installed successfully`);
-            spinner.success();
+            const unwrapSpinner = yocto({ text: `Unwrapping ${colors.bold(pkgName)}` });
+
+            try {
+                helper.unwrapInstalledPkg();
+                unwrapSpinner.success(`Installation process finished successfully`)
+            } catch (error) {
+                unwrapSpinner.error(`Error on unwrapping ${colors.bold(pkgName)} package`);
+            }
             this.newCmdLine();
 
-        }, 2000);
+        }
+
+        if (!result)
+            spinner.error(`Failed to create ${colors.bold(pkgName)} project`);
     }
 
     showGenericHelp() {
@@ -254,7 +273,7 @@ export class StillCmd {
 
         this.cmdMessage(`  Serching project root folder ${actualDir}`);
 
-        if (FileHelper.wasRootFolderReached(actualDir)) {
+        if (FileHelper.wasRootFolderReached(actualDir).flag) {
             this.cmdMessage(`  Found project root folder`);
             await cb({ ...fileMetadata, routeFile: `${actualDir}/route.map.js` }, spinner);
         } else {
@@ -314,13 +333,11 @@ export class StillCmd {
 
     static silentConsoleLog = false;
     newCmdLine() {
-        if (!StillCmd.silentConsoleLog)
-            console.log(`\n`);
+        if (!StillCmd.silentConsoleLog) console.log(`\n`);
     }
 
     cmdMessage(msg) {
-        if (!StillCmd.silentConsoleLog)
-            console.log(`${msg}`);
+        if (!StillCmd.silentConsoleLog) console.log(`${msg}`);
     }
 
     parseCmdType() {
@@ -336,6 +353,14 @@ export class StillCmd {
 
         if (command[0] == 'app' || command[0] == 'A')
             opts = { 'app': command[0], action: command[1] };
+
+        if (command[0] == 'install' || command[0] == 'i') {
+            opts = {
+                'install': command[0],
+                arguments: command.slice(1).join(' '),
+                pkg: command[1]
+            };
+        }
 
         return opts;
     }

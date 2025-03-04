@@ -1,5 +1,6 @@
 import { exec, execSync, spawn } from 'child_process';
 import { platform } from 'os';
+import colors from 'yoctocolors';
 import { StillCmd } from '../StillCmd.js';
 
 export class FrameworkHelper {
@@ -19,40 +20,67 @@ export class FrameworkHelper {
         return await FrameworkHelper.runInstallStillPkg('@stilljs/core', projectName);
     }
 
-    static async runInstallStillPkg(pkg, projectName) {
+    static async runInstallStillPkg(
+        pkg,
+        projectName = null,
+        noFromOutside = null,
+        { cmdObj = null, spinner }
+    ) {
 
         if (pkg == '@stilljs/core')
             await FrameworkHelper.initAProject(projectName);
 
         return new Promise((resolve) => {
 
-            let _global = '', enterFolderCmd = `cd ./${projectName}`;
-            if (pkg == 'live-server') _global = '-g';
+            if (noFromOutside != null) {
+                if (noFromOutside) {
+                    spinner.error(`Failed to install package`);
+                    cmdObj.cmdMessage(
+                        '\n  Package installation ' + colors.bold(colors.red('cannot')) + ' needs to root in the root folder:\n\n'
+                        + '\t- please change to the '
+                        + colors.bold(colors.green('root folder'))
+                        + '\n\t- Then you can install a package'
+                    );
+                    cmdObj.newCmdLine();
+                    return resolve(false);
+                }
+            }
 
-            const iProcess = spawn(
-                `${enterFolderCmd} && npm i ${pkg} ${_global}`, [], { shell: true }
-            );
+            if (!noFromOutside) {
 
-            iProcess.stdout.setEncoding('utf8');
-            iProcess.stderr.setEncoding('utf8');
+                let _global = '';
+                let enterFolderCmd = `cd ./${projectName}`
 
-            iProcess.stdout.on('data', (data) => {
-                process.stdout.write(data);
-            });
+                if (pkg == 'live-server') _global = '-g';
+                if (pkg != 'live-server' && pkg != '@stilljs/core')
+                    enterFolderCmd = null;
 
-            iProcess.stderr.on('data', (data) => {
-                process.stdout.write(data);
-                resolve(false);
-            });
+                const iProcess = spawn(
+                    `${enterFolderCmd != null ? ' && ' : ''} npm i ${pkg} ${_global}`, [], { shell: true }
+                );
 
-            iProcess.stdout.on('end', (data) => {
+                iProcess.stdout.setEncoding('utf8');
+                iProcess.stderr.setEncoding('utf8');
 
-                if (pkg == '@stilljs/core')
-                    FrameworkHelper.runInstallStillPkg('live-server');
+                iProcess.stdout.on('data', (data) => {
+                    process.stdout.write(data);
+                });
 
-                resolve(true);
+                iProcess.stderr.on('data', (data) => {
+                    process.stdout.write(data);
+                    resolve(false);
+                });
 
-            });
+                iProcess.stdout.on('end', (data) => {
+
+                    if (pkg == '@stilljs/core')
+                        FrameworkHelper.runInstallStillPkg('live-server');
+
+                    resolve(true);
+
+                });
+
+            }
         });
 
 
@@ -94,6 +122,18 @@ export class FrameworkHelper {
         const removeNodeMod = `rm -rf ./${projectName}/node_modules`;
 
         execSync(`cd ./${projectName} && ${moveToRootCmd}`);
+        execSync(`${removeNodeMod} && ${removePkgJson}`);
+
+    }
+
+
+    static unwrapInstalledPkg() {
+
+        const moveToRootCmd = 'mv node_modules/@stilljs/* @still/vendors/';
+        const removePkgJson = `rm -rf ./package-lock.json`;
+        const removeNodeMod = `rm -rf ./node_modules`;
+
+        execSync(`${moveToRootCmd}`);
         execSync(`${removeNodeMod} && ${removePkgJson}`);
 
     }
