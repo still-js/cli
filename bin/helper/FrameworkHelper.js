@@ -118,24 +118,49 @@ export class FrameworkHelper {
 
     static unwrapStillJSFolder(projectName) {
 
-        const moveToRootCmd = 'mv node_modules/@stilljs/core/* ./';
-        const removePkgJson = `rm -rf ./${projectName}/package-lock.json`;
-        const removeNodeMod = `rm -rf ./${projectName}/node_modules`;
+        let moveToRootCmd = 'mv node_modules/@stilljs/core/* ./';
+        let removePkgJson = `rm -rf ./${projectName}/package-lock.json`;
+        let removeNodeMod = `rm -rf ./${projectName}/node_modules`;
+        let pathInit = './';
+        let chain = '&&';
 
-        execSync(`cd ./${projectName} && ${moveToRootCmd}`);
-        execSync(`${removeNodeMod} && ${removePkgJson}`);
+        if (this.isWindows()) {
+            const rm = 'Remove-Item -Path';
+            const rf = '-Recurse -Force';
+            const src = '.\\node_modules\\@stilljs\\core\\*';
+            moveToRootCmd = `powershell.exe Move-Item -Path ${src} -Destination .\\`;
+            removePkgJson = `powershell.exe ${rm} ".\\${projectName}\\package-lock.json" ${rf}`;
+            removeNodeMod = `powershell.exe ${rm} ".\\${projectName}\\node_modules" ${rf}`;
+            pathInit = '.\\';
+            chain = ';';
+        }
+
+        execSync(`cd ${pathInit}${projectName} ${chain} ${moveToRootCmd}`);
+        execSync(`${removeNodeMod} ${chain} ${removePkgJson}`);
 
     }
 
 
     static unwrapInstalledPkg() {
 
-        const moveToRootCmd = 'mv node_modules/@stilljs/* @still/vendors/';
-        const removePkgJson = `rm -rf ./package-lock.json`;
-        const removeNodeMod = `rm -rf ./node_modules`;
+        let moveToRootCmd = 'mv node_modules/@stilljs/* @still/vendors/';
+        let removePkgJson = `rm -rf ./package-lock.json`;
+        let removeNodeMod = `rm -rf ./node_modules`;
+        let chain = '&&';
+
+        if (this.isWindows()) {
+            const rm = 'Remove-Item -Path';
+            const rf = '-Recurse -Force';
+            const src = '.\\node_modules\\@stilljs\\*';
+            const dst = '.\\@still\\vendors\\';
+            moveToRootCmd = `powershell.exe Move-Item -Path ${src} -Destination ${dst}`;
+            removePkgJson = `powershell.exe ${rm} .\\package-lock.json ${rf}`;
+            removeNodeMod = `powershell.exe ${rm} .\\node_modules ${rf}`;
+            chain = ';';
+        }
 
         execSync(`${moveToRootCmd}`);
-        execSync(`${removeNodeMod} && ${removePkgJson}`);
+        execSync(`${removeNodeMod} ${chain} ${removePkgJson}`);
 
     }
 
