@@ -24,7 +24,7 @@ export class FrameworkHelper {
         pkg,
         projectName = null,
         noFromOutside = null,
-        { cmdObj = null, spinner }
+        { cmdObj = null, spinner } = {}
     ) {
 
         if (pkg == '@stilljs/core')
@@ -55,8 +55,9 @@ export class FrameworkHelper {
                 if (pkg != 'live-server' && pkg != '@stilljs/core')
                     enterFolderCmd = null;
 
+                const complement = `${enterFolderCmd != null ? enterFolderCmd + ' && ' : ''}`;
                 const iProcess = spawn(
-                    `${enterFolderCmd != null ? ' && ' : ''} npm i ${pkg} ${_global}`, [], { shell: true }
+                    `${complement} npm i ${pkg} ${_global}`, [], { shell: true }
                 );
 
                 iProcess.stdout.setEncoding('utf8');
