@@ -9,9 +9,9 @@ Added Windows Powershell capabilities on still-cli for handling cmd execution.
  
 ### Added
 - <b>MAJOR</b> - still-cli CMD Exec capabilities for Windows/Powershell to allow project unwrap when creating it
-<br>
+
 - <b>MAJOR</b> - still-cli CMD Exec capabilities for Windows/Powershell to allow project unwrap library installation
-<br>
+ 
 - <b>MAJOR</b> - New still-cli alias point to ```stilljs``` in addition to ```still``` and ```st``` previously existed
  
  
