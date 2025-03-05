@@ -1,4 +1,5 @@
 import { exec, execSync, spawn } from 'child_process';
+import { cpSync, rmSync } from 'fs';
 import { platform } from 'os';
 import colors from 'yoctocolors';
 import { StillCmd } from '../StillCmd.js';
@@ -118,49 +119,29 @@ export class FrameworkHelper {
 
     static unwrapStillJSFolder(projectName) {
 
-        let moveToRootCmd = 'mv node_modules/@stilljs/core/* ./';
-        let removePkgJson = `rm -rf ./${projectName}/package-lock.json`;
-        let removeNodeMod = `rm -rf ./${projectName}/node_modules`;
-        let pathInit = './';
-        let chain = '&&';
-
-        if (this.isWindows()) {
-            const rm = 'Remove-Item -Path';
-            const rf = '-Recurse -Force';
-            const src = '.\\node_modules\\@stilljs\\core\\*';
-            moveToRootCmd = `powershell.exe Move-Item -Path ${src} -Destination .\\`;
-            removePkgJson = `powershell.exe ${rm} ".\\${projectName}\\package-lock.json" ${rf}`;
-            removeNodeMod = `powershell.exe ${rm} ".\\${projectName}\\node_modules" ${rf}`;
-            pathInit = '.\\';
-            chain = ';';
+        try {
+            cpSync(`${projectName}/node_modules/@stilljs/core/`, `${projectName}`, { recursive: true });
+            rmSync(`${projectName}/node_modules/`, { recursive: true });
+            return true;
+        } catch (error) {
+            return false;
         }
-
-        execSync(`cd ${pathInit}${projectName} ${chain} ${moveToRootCmd}`);
-        execSync(`${removeNodeMod} ${chain} ${removePkgJson}`);
 
     }
 
 
     static unwrapInstalledPkg() {
 
-        let moveToRootCmd = 'mv node_modules/@stilljs/* @still/vendors/';
-        let removePkgJson = `rm -rf ./package-lock.json`;
-        let removeNodeMod = `rm -rf ./node_modules`;
-        let chain = '&&';
+        try {
 
-        if (this.isWindows()) {
-            const rm = 'Remove-Item -Path';
-            const rf = '-Recurse -Force';
-            const src = '.\\node_modules\\@stilljs\\*';
-            const dst = '.\\@still\\vendors\\';
-            moveToRootCmd = `powershell.exe Move-Item -Path ${src} -Destination ${dst}`;
-            removePkgJson = `powershell.exe ${rm} .\\package-lock.json ${rf}`;
-            removeNodeMod = `powershell.exe ${rm} .\\node_modules ${rf}`;
-            chain = ';';
+            cpSync(`node_modules/@stilljs/`, `@still/vendors/`, { recursive: true });
+            rmSync(`node_modules`, { recursive: true });
+            return true;
+
+        } catch (error) {
+            return false;
         }
 
-        execSync(`${moveToRootCmd}`);
-        execSync(`${removeNodeMod} ${chain} ${removePkgJson}`);
 
     }
 

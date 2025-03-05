@@ -15,3 +15,12 @@ Added Windows Powershell capabilities on still-cli for handling cmd execution.
 - <b>MAJOR</b> - New still-cli alias point to ```stilljs``` in addition to ```still``` and ```st``` previously existed
  
  
+## [Released] - 2025-03-05
+## [Version] - 1.6.0
+Changed Windows Powershell commands by NodeJS native file system functions.
+ 
+### Changed
+- <b>MAJOR</b> - From CMD File system manipulation to NodeJS native fs implementations for moving/copying and releding files
+<br>
+ 
+ 
