@@ -4,7 +4,7 @@ This log contains all the changes which takes place for StillJS CLI tools.
  
 
 ## [Released] - 2025-03-20
-## [Version] - 1.6.3
+## [Version] - 1.6.2
 Adjustments, new features and improvements on the still-cli.
  
 ### Fixes
