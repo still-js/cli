@@ -22,7 +22,7 @@ export class StillCmd {
         this.program.version('0.1');
 
         this.program
-            .command('create <type> <name>')
+            .command('create <type> <name> [args...]')
             .description(
                 'Create a new Project or Component as bellow examples:\n'
                 + '- example1: ' + colors.bold(colors.green('still create pj myProj')) + ' create a project named myProj\n'
@@ -57,7 +57,7 @@ export class StillCmd {
             .command('app <action>')
             .description(
                 'Allow to prosecute operation on top of the application\n'
-                + '- example: ' + colors.bold(colors.green('still app open'))
+                + '- example: ' + colors.bold(colors.green('still app serve'))
                 + ' opens the app in the browser in the default port of 8181\n'
             );
 
@@ -138,12 +138,14 @@ export class StillCmd {
         StillCmd.stillProjectRootDir = [];
         this.newCmdLine();
         const spinner = yocto({ text: `Creating new component ${opts.name}` }).start();
+        const isRootFolder = FileHelper.isItRootFolder(spinner, this, false).flag;
 
-        if (FileHelper.isItRootFolder(spinner, this).flag) return;
-
-        let cmpName = opts.name;
+        let cmpName = opts.name.startsWith('./') ? opts.name.replace('./', '') : opts.name;
         let cmpPath = cmpName.split('/');
         cmpName = cmpPath.at(-1), cmpPath.pop();
+
+        if (isRootFolder && cmpPath[0] != 'app')
+            return FileHelper.wrongFolderCmpCreationError(spinner, this);
 
         const fileMetadata = { cmpPath, cmpName };
         this.cmdMessage(`\n  Component will be created at ${cmpPath != '' ? cmpPath.join('/') : './'}/`);
@@ -163,7 +165,6 @@ export class StillCmd {
                     dirPath,
                     fileName
                 } = await FileHelper.parseDirTree(cmpPath, cmpName);
-
 
                 try {
 
@@ -258,6 +259,10 @@ export class StillCmd {
      */
     async getRootDirThenRunCallback(fileMetadata, spinner, dir, cb, callNum = 0) {
 
+        if (callNum == 10) {
+            return FileHelper.noStillProjectFolderError(spinner, this);
+        }
+
         let enteredPath = fileMetadata?.cmpPath?.length ? fileMetadata.cmpPath.join('/') : '';
         let actualDir = dir || (`${process.cwd()}/${enteredPath}`);
         if (!fs.existsSync(actualDir + '/')) {
@@ -310,7 +315,7 @@ export class StillCmd {
 
     async listRoutes(opts) {
 
-        let isListRoutes = opts.action == 'list';
+        let isListRoutes = opts.action == 'list' || opts.action == 'l';
         this.newCmdLine();
         const spinner = yocto({ text: 'Searching and parsing routes...' }).start();
         this.newCmdLine();

@@ -16,21 +16,26 @@ export class RouterHelper {
     static updateProjectRoutes(file, cmpName, cmpPath) {
 
         let routesContent = fs.readFileSync(file, { encoding: 'utf-8' });
+        routesContent = routesContent.replace(/export(\s){0,1}const(\s)/g, 'global.');
+        routesContent = routesContent.replace(/export(\s)/g, '');
+        eval(routesContent);
 
         let componentRoute = cmpPath.replace(`${cmpName}.js`, '');
+        let url = RouterHelper.parseUrlPath(cmpName, componentRoute);
+
         if (componentRoute.at(-1) == '/')
             componentRoute = componentRoute.slice(0, -1);
 
-        const re = RouterHelper.viewRoutesMapRE();
-        const newRoute = `${cmpName}: 'app/${componentRoute}',\n`;
+        stillRoutesMap.viewRoutes.regular[cmpName] = {
+            path: `app/${componentRoute}`, url
+        }
 
-        routesContent = routesContent.replace(re, (mt) => {
-            return 'viewRoutes: {\nregular: {\n' + newRoute;
-        });
-
-        const newRoutesContent = (
-            beautify(routesContent, { indent_size: 4, space_in_empty_paren: true })
-        );
+        const identConfig = { indent_size: 4, space_in_empty_paren: true };
+        const newRoutesContent = ''
+            + RouterHelper.routeFileTopCOmment() + '\n'
+            + 'export const stillRoutesMap = '
+            + beautify(JSON.stringify(stillRoutesMap).replace(/"([^"]+)":/g, '$1:'), identConfig) + '\n'
+            + '\n\n' + RouterHelper.stillGetRouteFuncContent() + '\n';
 
         try {
             fs.writeFileSync(file, newRoutesContent, { encoding: 'utf-8' });
@@ -40,6 +45,64 @@ export class RouterHelper {
             return false;
         }
 
+    }
+
+    /** @param { String } cmpName */
+    static parseUrlPath(cmpName, componentRoute) {
+
+        let pathName = cmpName.slice(-1).toLowerCase() == '.js'
+            ? cmpName.slice(0, -3)
+            : cmpName;
+
+        let path = componentRoute.replace(/app\//i, '');
+        path = path.replace(/components\//i, '/');
+        path = path.replace(/component\//i, '/');
+        if (path.slice(-1) == '/') path = path.slice(0, -1)
+
+        pathName = pathName.replace(/components/i, '');
+        pathName = pathName.replace(/Component/i, '');
+
+        const resource = pathName.split('')
+            .map(
+                (ltr, idx) => {
+
+                    const isPrevCapitalLtr = pathName[idx - 1]?.toUpperCase() == pathName[idx - 1];
+                    const is2PrevCapitalLtr = pathName[idx - 2]?.toUpperCase() == pathName[idx - 2];
+                    const isCurrCapitalLtr = ltr == ltr.toUpperCase();
+                    const first = idx == 0;
+                    const second = idx == 1;
+
+                    return !first && (isCurrCapitalLtr && !isPrevCapitalLtr)
+                        ? `-${ltr.toLowerCase()}`
+                        : (isPrevCapitalLtr && !isCurrCapitalLtr && is2PrevCapitalLtr && !second)
+                            ? `-${ltr.toLowerCase()}`
+                            : ltr.toLowerCase()
+                }
+            )
+            .join('');
+
+        return path.toLowerCase() + '/' + resource
+
+    }
+
+    static stillGetRouteFuncContent() {
+        return ''
+            + 'export function $stillGetRouteMap() {\n\n'
+            + '\treturn {'
+            + '\t\troute: {\n'
+            + '\t\t\t...stillRoutesMap.viewRoutes.regular,\n'
+            + '\t\t\t...stillRoutesMap.viewRoutes.lazyInitial\n'
+            + '\t\t},\n'
+            + '\t}\n'
+            + '}';
+    }
+
+    static routeFileTopCOmment() {
+        return `
+        /**
+         * Don't change the constante name as it'll impact on the component routing
+         */
+        `;
     }
 
     static checkIfRouteExists(file, cmpName) {
@@ -62,15 +125,21 @@ export class RouterHelper {
         routesContent = routesContent.replace(/export(\s)/g, '');
         eval(routesContent);
 
-        const consoleTable = new TerminalTable();
+        const consoleTable = new TerminalTable({
+            columns: [
+                { name: 'routeName', alignment: 'left', title: 'Route Name' },
+                { name: 'Path', alignment: 'left' },
+                { name: 'URL', alignment: 'left' }
+            ]
+        });
 
         const routes = Object.entries(stillRoutesMap.viewRoutes.regular);
         for (const [field, value] of routes) {
             consoleTable.addRow(
                 {
-                    'Route Name': String.raw`${field}`,
-                    'Path': `${value}/`,
-                    'Full Path': `${value}/${field}.js`
+                    routeName: String.raw`${field} `,
+                    Path: `${value.path}/${field}`,
+                    URL: `${value.url}`,
                 }, { color: 'cyan' }
             );
         }
