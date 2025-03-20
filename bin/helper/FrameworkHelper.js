@@ -152,6 +152,7 @@ export class FrameworkHelper {
     static openApp(rootPath) {
 
         rootPath = rootPath.replace('route.map.js', '').replace('app//', 'app/');
+        if (rootPath.slice(-2) == '//') rootPath = rootPath.slice(0, -1) + './';
         const cmd = spawn(`npx live-server ${rootPath}`, [], { shell: true });
 
         cmd.stdout.setEncoding('utf8');

@@ -4,6 +4,23 @@ This log contains all the changes which takes place for StillJS CLI tools.
  
 
 ## [Released] - 2025-03-20
+## [Version] - 1.6.3
+Adjustments, new features and improvements on the still-cli.
+ 
+### Fixes
+- <b>MINOR</b> - Path and URL generation when creation component from Root folder.
+- <b>MINOR</b> - command `app` and `serve` parameter.
+
+<br>
+<hr>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
+
+
+
+
+## [Released] - 2025-03-19
 ## [Version] - 1.6.1
 Adjustments, new features and improvements on the still-cli.
  

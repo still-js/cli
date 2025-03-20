@@ -26,8 +26,10 @@ export class RouterHelper {
         if (componentRoute.at(-1) == '/')
             componentRoute = componentRoute.slice(0, -1);
 
+        const pathInit = componentRoute.startsWith('app/') ? '' : 'app/'
+
         stillRoutesMap.viewRoutes.regular[cmpName] = {
-            path: `app/${componentRoute}`, url
+            path: `${pathInit}${componentRoute}`, url
         }
 
         const identConfig = { indent_size: 4, space_in_empty_paren: true };
@@ -57,6 +59,7 @@ export class RouterHelper {
         let path = componentRoute.replace(/app\//i, '');
         path = path.replace(/components\//i, '/');
         path = path.replace(/component\//i, '/');
+        path = path.replace(/\/\//i, '/');
         if (path.slice(-1) == '/') path = path.slice(0, -1)
 
         pathName = pathName.replace(/components/i, '');
@@ -80,6 +83,9 @@ export class RouterHelper {
                 }
             )
             .join('');
+
+        if (!path.startsWith('/')) path = '/' + path;
+        if (!path.endsWith('/')) path = path.slice(0, -1);
 
         return path.toLowerCase() + '/' + resource
 
