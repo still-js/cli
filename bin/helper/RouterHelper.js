@@ -93,14 +93,14 @@ export class RouterHelper {
 
     static stillGetRouteFuncContent() {
         return ''
-            + 'export function $stillGetRouteMap() {\n\n'
-            + '\treturn {'
-            + '\t\troute: {\n'
-            + '\t\t\t...stillRoutesMap.viewRoutes.regular,\n'
-            + '\t\t\t...stillRoutesMap.viewRoutes.lazyInitial\n'
-            + '\t\t},\n'
-            + '\t}\n'
-            + '}';
+        //+ 'export function $stillGetRouteMap() {\n\n'
+        //+ '\treturn {'
+        //+ '\t\troute: {\n'
+        //+ '\t\t\t...stillRoutesMap.viewRoutes.regular,\n'
+        //+ '\t\t\t...stillRoutesMap.viewRoutes.lazyInitial\n'
+        //+ '\t\t},\n'
+        //+ '\t}\n'
+        //+ '}';
     }
 
     static routeFileTopCOmment() {
