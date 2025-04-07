@@ -14,22 +14,23 @@ export class FrameworkHelper {
     /** 
      * @param { StillCmd } cmdInstance 
      * */
-    static async createNewStillProject(cmdInstance, spinnerInstance, projectName) {
+    static async createNewStillProject(cmdInstance, spinnerInstance, projectName, isLone = false) {
 
         FrameworkHelper.cmdInstance = cmdInstance;
         spinnerInstance.start();
-        return await FrameworkHelper.runInstallStillPkg('@stilljs/core', projectName);
+        return await FrameworkHelper.runInstallStillPkg('@stilljs/core', projectName, null, { isLone });
     }
 
     static async runInstallStillPkg(
         pkg,
         projectName = null,
         noFromOutside = null,
-        { cmdObj = null, spinner } = {}
+        { cmdObj = null, spinner, isLone = null } = {}
     ) {
 
+        projectName = isLone ? 'lone' : projectName;
         if (pkg == '@stilljs/core')
-            await FrameworkHelper.initAProject(projectName);
+            await FrameworkHelper.initAProject(projectName, isLone);
 
         return new Promise((resolve) => {
 
@@ -88,23 +89,24 @@ export class FrameworkHelper {
 
     }
 
-    static async initAProject(projectName) {
+    static async initAProject(projectName, forLone = false) {
 
         const obj = FrameworkHelper.cmdInstance;
 
         return new Promise((resolve) => {
 
-            exec(`mkdir ${projectName}`, async (err, stdout, stderr) => {
+            const projName = forLone ? `lone` : projectName
+            exec(`mkdir ${projName}`, async (err, stdout, stderr) => {
 
                 if (err) {
-                    obj.cmdMessage(`Error on creating the folder ${projectName}`)
+                    obj.cmdMessage(`Error on creating the folder ${projName}`)
                     resolve(false);
                     return;
                 }
 
                 try {
 
-                    execSync(`cd ./${projectName} && npm init -y`);
+                    execSync(`cd ./${projName} && npm init -y`);
                     resolve(true);
 
                 } catch (error) {
@@ -117,11 +119,30 @@ export class FrameworkHelper {
         });
     }
 
-    static unwrapStillJSFolder(projectName) {
+    static unwrapStillJSFolder(projectName, forLone, isInit) {
 
         try {
-            cpSync(`${projectName}/node_modules/@stilljs/core/`, `${projectName}`, { recursive: true });
-            rmSync(`${projectName}/node_modules/`, { recursive: true });
+
+            if (isInit) {
+                cpSync(`${projectName}/node_modules/@stilljs/core/`, `${projectName}/../`, { recursive: true });
+                rmSync(`${projectName}/node_modules/`, { recursive: true });
+                rmSync(`${projectName}`, { recursive: true });
+            } else {
+                cpSync(`${projectName}/node_modules/@stilljs/core/`, `${projectName}`, { recursive: true });
+                rmSync(`${projectName}/node_modules/`, { recursive: true });
+            }
+            if (forLone) {
+
+                rmSync(`${projectName}/@still/`, { recursive: true });
+                rmSync(`${projectName}/app-setup.js`, { recursive: true });
+                rmSync(`${projectName}/app-template.js`, { recursive: true });
+                rmSync(`${projectName}/jsconfig.json`, { recursive: true });
+                rmSync(`${projectName}/package.json`, { recursive: true });
+                rmSync(`${projectName}/README.md`, { recursive: true });
+                rmSync(`${projectName}/index.html`, { recursive: true });
+                rmSync(`${projectName}/package-lock.json`, { recursive: true });
+
+            }
             return true;
         } catch (error) {
             return false;

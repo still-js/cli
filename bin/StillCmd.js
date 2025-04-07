@@ -8,8 +8,7 @@ import { RouterHelper } from './helper/RouterHelper.js';
 
 export class StillCmd {
 
-    /** @type { Command } */
-    program;
+    /** @type { Command } */ program;
     static stillProjectRootDir = [];
     static createTypeOptions = {
         'COMPONENT': 'COMPONENT',
@@ -22,12 +21,32 @@ export class StillCmd {
         this.program.version('0.1');
 
         this.program
+            .command('init')
+            .description(
+                'Create a project in the current folder as the\n'
+                + '- example: ' + colors.bold(colors.green('still init')) + ' starts still project in the current folder\n'
+            );
+
+        this.program
+            .command('lone')
+            .description(
+                'Setup a project in the current folder:\n'
+                + '- example: ' + colors.bold(colors.green('still lone')) + ' setup lone project in the current folder \n'
+            );
+
+        this.program
             .command('create <type> <name> [args...]')
+            .option('--lone', 'instruction for Lone Component generation')
             .description(
                 'Create a new Project or Component as bellow examples:\n'
                 + '- example1: ' + colors.bold(colors.green('still create pj myProj')) + ' create a project named myProj\n'
                 + '- example2: ' + colors.bold(colors.green('still create cp MenuComponent')) + ' create a ne component with name MenuComponent \n'
             );
+
+        this.program
+            .command('c <type> <name>')
+            .option('--lone', 'instruction for Lone Component generation')
+            .description('Alias for create, produces the same result:\n');
 
         this.program
             .command('install <arguments...>')
@@ -48,10 +67,6 @@ export class StillCmd {
         this.program
             .command('r <action>')
             .description('Alias to route, produces the same result\n');
-
-        this.program
-            .command('c <type> <name>')
-            .description('Alias for create, produces the same result:\n');
 
         this.program
             .command('app <action>')
@@ -94,7 +109,7 @@ export class StillCmd {
         const cmdArgs = String(opts.create);
 
         const isCreateComp = this.checkCreateOption(COMPONENT, cmdArgs)
-        if (isCreateComp) return await this.createNewComponent(opts)
+        if (isCreateComp) return await this.createComponent(opts)
 
         const isCreateProj = this.checkCreateOption(PROJECT, cmdArgs);
         if (isCreateProj) return await this.createNewProject(opts);
@@ -103,13 +118,17 @@ export class StillCmd {
 
     async createNewProject(opts) {
 
-        const helper = FrameworkHelper, projectName = opts.name;
+        const helper = FrameworkHelper, isLone = opts.isLone, isInit = opts.isInit;
+
+        let projectName = opts.isLone ? 'lone' : opts.name;
+        if (opts.isInit) projectName = 'still_tmp';
 
         this.newCmdLine();
-        this.cmdMessage(`New project (${colors.bold(projectName)}) creation initiated:`);
+        const projName = (isLone || isInit) ? ' ' : ` (${colors.bold(projectName)}) `;
+        this.cmdMessage(`New project${projName}creation initiated:`);
         const spinner = yocto({ text: 'Downloading StillJS from @stilljs/core' });
 
-        const result = await helper.createNewStillProject(this, spinner, projectName);
+        const result = await helper.createNewStillProject(this, spinner, projectName, isLone);
         if (result) {
 
             spinner.success(`Project ${colors.bold(projectName)} created`);
@@ -117,7 +136,7 @@ export class StillCmd {
             const unwrapSpinner = yocto({ text: 'Unwrapping root folder' });
 
             try {
-                helper.unwrapStillJSFolder(projectName);
+                helper.unwrapStillJSFolder(projectName, isLone, isInit);
                 unwrapSpinner.success(`Process creation ran successfully`)
             } catch (error) {
                 unwrapSpinner.error(`Error on unwrapping ${colors.bold(projectName)} project`);
@@ -133,6 +152,11 @@ export class StillCmd {
             spinner.error(`Failed to create ${colors.bold(projectName)} project`);
     }
 
+    async createComponent(opts) {
+        if (opts.isLone) this.createLoneComponent(opts);
+        else this.createNewComponent(opts);
+    }
+
     async createNewComponent(opts) {
 
         StillCmd.stillProjectRootDir = [];
@@ -144,10 +168,10 @@ export class StillCmd {
         let cmpPath = cmpName.split('/');
         cmpName = cmpPath.at(-1), cmpPath.pop();
 
-        if (isRootFolder && cmpPath[0] != 'app')
+        if (isRootFolder && cmpPath[0] != 'app' && !opts.isLone)
             return FileHelper.wrongFolderCmpCreationError(spinner, this);
 
-        const fileMetadata = { cmpPath, cmpName };
+        const fileMetadata = { cmpPath, cmpName, isLone: opts.isLone };
         this.cmdMessage(`\n  Component will be created at ${cmpPath != '' ? cmpPath.join('/') : './'}/`);
 
         await this.getRootDirThenRunCallback(fileMetadata, spinner, null,
@@ -199,6 +223,71 @@ export class StillCmd {
 
     }
 
+    async createLoneComponent(opts) {
+
+        StillCmd.stillProjectRootDir = [];
+        this.newCmdLine();
+        const spinner = yocto({ text: `Creating new component ${opts.name}` }).start();
+        const isRootFolder = FileHelper.isItRootFolder(spinner, this, false).flag;
+
+        let cmpName = opts.name.startsWith('./') ? opts.name.replace('./', '') : opts.name;
+        let cmpPath = cmpName.split('/');
+        cmpName = cmpPath.at(-1), cmpPath.pop();
+
+        if (isRootFolder && cmpPath[0] != 'app' && !opts.isLone)
+            return FileHelper.wrongFolderCmpCreationError(spinner, this);
+
+        const fileMetadata = { cmpPath, cmpName, isLone: opts.isLone };
+        this.cmdMessage(`\n  Component will be created at ${cmpPath != '' ? cmpPath.join('/') : './'}/`);
+
+        await this.getRootDirThenRunCallback(fileMetadata, spinner, null,
+
+            async ({ cmpPath, cmpName, routeFile }, spinnerObj) => {
+
+                const doesCmpExists = RouterHelper.checkIfRouteExists(routeFile, cmpName);
+                if (doesCmpExists) {
+                    spinnerObj.error(`Component with name ${cmpName} already exists, please choose another name to avoid conflict`);
+                    return;
+                }
+
+                const rootFolder = StillCmd.stillProjectRootDir.join('/');
+                const {
+                    dirPath,
+                    fileName
+                } = await FileHelper.parseDirTree(cmpPath, cmpName);
+
+                try {
+
+                    const cmpFullPath = FileHelper.createComponentFile(
+                        cmpName, rootFolder, dirPath, fileName
+                    );
+
+                    spinnerObj.success(`Component ${cmpFullPath} created successfully`);
+
+                    const routeSpinner = yocto({ text: `Creating the route` }).start();
+                    const addRoute = RouterHelper.updateProjectRoutes(routeFile, cmpName, cmpFullPath);
+                    if (addRoute)
+                        routeSpinner.success(`New route added with path ${cmpFullPath}`);
+                    else {
+                        routeSpinner.error(`
+                            Failed to a route for ${cmpName}, 
+                            you can anyway add it manually in the route.map.js file
+                        `);
+                    }
+
+                    this.newCmdLine();
+
+                } catch (error) {
+
+                    spinnerObj.error('Erro on creating component: ' + fileName);
+                    this.cmdMessage(error.message);
+                    this.newCmdLine();
+
+                }
+
+            });
+    }
+
     async install(opts) {
 
         const pkgName = opts.pkg, helper = FrameworkHelper;
@@ -233,7 +322,7 @@ export class StillCmd {
 
     showGenericHelp() {
         this.newCmdLine();
-        this.cmdMessage(`Type still -h/--help to know what optionss are provided`);
+        this.cmdMessage(`Type still -h/--help to know what options are provided`);
         this.newCmdLine();
     }
 
@@ -255,16 +344,26 @@ export class StillCmd {
     }
 
     /**
-     *  @param {{ cmpPath, cmpName, routeFile }, spinnerObj} cb 
+     *  @param {{ cmpPath, cmpName, routeFile, isLone }, spinnerObj} cb 
      */
     async getRootDirThenRunCallback(fileMetadata, spinner, dir, cb, callNum = 0) {
 
-        if (callNum == 10) {
-            return FileHelper.noStillProjectFolderError(spinner, this);
-        }
-
         let enteredPath = fileMetadata?.cmpPath?.length ? fileMetadata.cmpPath.join('/') : '';
         let actualDir = dir || (`${process.cwd()}/${enteredPath}`);
+
+        if (fileMetadata.isLone) {
+
+            if (callNum == 10)
+                return FileHelper.noLoneProjectFolderError(spinner, this);
+
+            if (FileHelper.wasRootFolderReached(actualDir, true).flag) {
+                await cb({ ...fileMetadata, routeFile: `${actualDir}/route.map.js` }, spinner);
+            }
+        }
+
+        if (callNum == 10)
+            return FileHelper.noStillProjectFolderError(spinner, this);
+
         if (!fs.existsSync(actualDir + '/')) {
 
             const newDirPath = actualDir.split('/');
@@ -287,6 +386,10 @@ export class StillCmd {
             return;
         }
 
+    }
+
+    async runLoneCmpCreation(cb = () => { }, params, spinner) {
+        await cb({ ...params }, spinner)
     }
 
     async runAppOperation(opts) {
@@ -350,8 +453,15 @@ export class StillCmd {
         let opts;
         const command = process.argv.slice(2);
 
-        if (command[0] == 'create' || command[0] == 'c')
-            opts = { 'create': command[1], name: command[2] };
+        const createOpts = ['init', 'lone', 'create', 'c']
+        if (createOpts.includes(command[0])) {
+            opts = {
+                'create': createOpts.slice(0, 2).includes(command[0]) ? 'pj' : command[1],
+                name: command[0] == 'init' ? process.env.PWD : command[2],
+                isLone: command[3] == '--lone' || command[0] == 'lone',
+                isInit: command[0] == 'init'
+            };
+        }
 
         if (command[0] == 'route' || command[0] == 'r')
             opts = { 'route': command[0], action: command[1] };

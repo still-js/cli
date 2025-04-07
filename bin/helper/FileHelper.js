@@ -9,17 +9,26 @@ export class FileHelper {
         '@still', 'app-setup.js', 'app-template.js', 'index.html', 'route.map.js'
     ];
 
-    static wasRootFolderReached(actualDir) {
+    static rootFilesForLone = [
+        'app', 'route.map.js'
+    ];
+
+
+    static wasRootFolderReached(actualDir, forLoneCmp = false) {
+
+        const rootFolderStat = forLoneCmp
+            ? FileHelper.rootFilesForLone
+            : FileHelper.rootFiles;
 
         const files = fs.readdirSync(actualDir);
 
         let counter = 0;
         for (const file of files) {
-            if (FileHelper.rootFiles.includes(file)) counter++;
+            if (rootFolderStat.includes(file)) counter++;
         }
 
         return {
-            flag: counter == FileHelper.rootFiles.length,
+            flag: counter == rootFolderStat.length,
             actualDir
         };
     }
@@ -126,6 +135,19 @@ export class FileHelper {
             + '\n\n\t- navigate to you project folder and run ' + colors.bold(colors.green('npx still create component'))
             + ' app/path-to/MyComponent again '
             + '\n\n\t-  or create a new projec typing ' + colors.bold(colors.green('npx still create project project-name'))
+        );
+        cmdObj.newCmdLine();
+
+    }
+
+    static noLoneProjectFolderError(spinner, cmdObj) {
+
+        cmdObj.cmdMessage('\n')
+        spinner.error(colors.bold(colors.red('Failed to create new component')));
+        cmdObj.cmdMessage(
+            '\n  You\'re not inside a Lone folder structure:'
+            + '\n\n\t- please init your lone project by running ' + colors.bold(colors.green('npx still lone'))
+            + '\n\n\t-  and then inside the folder structure create a new component typing ' + colors.bold(colors.green('npx still create component app/path-to/MyComponent'))
         );
         cmdObj.newCmdLine();
 
