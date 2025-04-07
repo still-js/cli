@@ -23,7 +23,7 @@ export class StillCmd {
         this.program
             .command('init')
             .description(
-                'Create a project in the current folder as the\n'
+                'Start a project in the current folder as the\n'
                 + '- example: ' + colors.bold(colors.green('still init')) + ' starts still project in the current folder\n'
             );
 
@@ -35,12 +35,16 @@ export class StillCmd {
             );
 
         this.program
+            .command('serve')
+            .description('Run the project and open to in the default browser\n');
+
+        this.program
             .command('create <type> <name> [args...]')
             .option('--lone', 'instruction for Lone Component generation')
             .description(
-                'Create a new Project or Component as bellow examples:\n'
-                + '- example1: ' + colors.bold(colors.green('still create pj myProj')) + ' create a project named myProj\n'
-                + '- example2: ' + colors.bold(colors.green('still create cp MenuComponent')) + ' create a ne component with name MenuComponent \n'
+                'Create a Component as the bellow examples:\n'
+                + '- example1: ' + colors.bold(colors.green('still create cp LeftMenu')) + ' create a new component with name LeftMenu \n'
+                + '- example2: ' + colors.bold(colors.green('still create cp LeftMenu --lone')) + ' create a new component with name LeftMenu for within Lone project \n'
             );
 
         this.program
@@ -170,7 +174,20 @@ export class StillCmd {
 
     async createComponent(opts) {
         if (opts.isLone) this.createLoneComponent(opts);
-        else this.createNewComponent(opts);
+        else {
+            if (FileHelper.loneProjectExists() && !FileHelper.stillProjectExists()) {
+                this.newCmdLine();
+                this.cmdMessage(colors.red(`${colors.bold('Wrong Component creation instructions')}: `));
+                this.cmdMessage(
+                    `\tYou're inside a Still ${colors.bold('Lone/CDN')} based project, please user --lone as the example:\n`
+                    + '\texample1: ' + colors.bold(colors.green('npx still create component path-to/MyComponent --lone'))
+                    + '\n\texample2: ' + colors.bold(colors.green('npx still c cp path-to/MyComponent --lone'))
+                );
+                this.newCmdLine();
+                return;
+            }
+            this.createNewComponent(opts)
+        };
     }
 
     async createNewComponent(opts) {
@@ -196,7 +213,12 @@ export class StillCmd {
 
                 const doesCmpExists = RouterHelper.checkIfRouteExists(routeFile, cmpName);
                 if (doesCmpExists) {
-                    spinnerObj.error(`Component with name ${cmpName} already exists, please choose another name to avoid conflict`);
+                    this.newCmdLine();
+                    spinnerObj.error(colors.red(`${colors.bold('Component name conflict error')}: `));
+                    this.cmdMessage(
+                        colors.bgRed(`\t Component with name ${colors.bold(cmpName)} already exists, please choose another name to avoid conflict`)
+                    );
+                    this.newCmdLine();
                     return;
                 }
 
@@ -244,17 +266,17 @@ export class StillCmd {
         StillCmd.stillProjectRootDir = [];
         this.newCmdLine();
         const spinner = yocto({ text: `Creating new component ${opts.name}` }).start();
-        const isRootFolder = FileHelper.isItRootFolder(spinner, this, false).flag;
+        const isRootFolder = FileHelper.isItRootFolder(spinner, this, false, true).flag;
 
         let cmpName = opts.name.startsWith('./') ? opts.name.replace('./', '') : opts.name;
         let cmpPath = cmpName.split('/');
         cmpName = cmpPath.at(-1), cmpPath.pop();
 
-        if (isRootFolder && cmpPath[0] != 'app' && !opts.isLone)
-            return FileHelper.wrongFolderCmpCreationError(spinner, this);
+        if (isRootFolder && cmpPath[0] != 'app' && opts.isLone)
+            return FileHelper.wrongFolderCmpCreationError(spinner, this, opts.isLone);
 
-        const fileMetadata = { cmpPath, cmpName, isLone: opts.isLone };
-        this.cmdMessage(`\n  Component will be created at ${cmpPath != '' ? cmpPath.join('/') : './'}/`);
+        const fileMetadata = { cmpPath, cmpName, isLone: opts.isLone, isRootFolder };
+        this.cmdMessage(`\n  Component will be created at ${cmpPath != '' ? cmpPath.join('/') + '/' : './'}`);
 
         await this.getRootDirThenRunCallback(fileMetadata, spinner, null,
 
@@ -367,15 +389,11 @@ export class StillCmd {
         let enteredPath = fileMetadata?.cmpPath?.length ? fileMetadata.cmpPath.join('/') : '';
         let actualDir = dir || (`${process.cwd()}/${enteredPath}`);
 
-        if (fileMetadata.isLone) {
+        if (callNum == 10 && fileMetadata.isLone)
+            return FileHelper.noLoneProjectFolderError(spinner, this);
 
-            if (callNum == 10)
-                return FileHelper.noLoneProjectFolderError(spinner, this);
-
-            if (FileHelper.wasRootFolderReached(actualDir, true).flag) {
-                await cb({ ...fileMetadata, routeFile: `${actualDir}/route.map.js` }, spinner);
-            }
-        }
+        if (fileMetadata?.isRootFolder && fileMetadata?.isLone)
+            return await cb({ ...fileMetadata, routeFile: `${process.env.PWD}/route.map.js` }, spinner);
 
         if (callNum == 10)
             return FileHelper.noStillProjectFolderError(spinner, this);
@@ -393,7 +411,7 @@ export class StillCmd {
 
         this.cmdMessage(`  Serching project root folder ${actualDir}`);
 
-        if (FileHelper.wasRootFolderReached(actualDir).flag) {
+        if (FileHelper.wasRootFolderReached(actualDir, fileMetadata?.isLone).flag) {
             this.cmdMessage(`  Found project root folder`);
             await cb({ ...fileMetadata, routeFile: `${actualDir}/route.map.js` }, spinner);
         } else {
@@ -482,8 +500,11 @@ export class StillCmd {
         if (command[0] == 'route' || command[0] == 'r')
             opts = { 'route': command[0], action: command[1] };
 
-        if (command[0] == 'app' || command[0] == 'A')
-            opts = { 'app': command[0], action: command[1] };
+        if (command[0] == 'app' || command[0] == 'A' || command[0] == 'serve') {
+            const action = command[0] == 'serve' ? command[0] : command[1];
+            const app = command[0] == 'serve' ? 'app' : command[0];
+            opts = { app, action };
+        }
 
         if (command[0] == 'install' || command[0] == 'i') {
             opts = {

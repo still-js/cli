@@ -106,9 +106,9 @@ export class FileHelper {
 
     }
 
-    static isItRootFolder(spinner, cmdObj, showLog = true) {
+    static isItRootFolder(spinner, cmdObj, showLog = true, forLone = false) {
 
-        const { flag, actualDir } = FileHelper.wasRootFolderReached(process.cwd());
+        const { flag, actualDir } = FileHelper.wasRootFolderReached(process.cwd(), forLone);
 
         if (flag) {
             if (showLog)
@@ -121,13 +121,22 @@ export class FileHelper {
     }
 
 
-    static wrongFolderCmpCreationError(spinner, cmdObj) {
+    static wrongFolderCmpCreationError(spinner, cmdObj, forLone = false) {
+
+        let cmd = colors.bold(colors.green('npx still create component'));
+        let cmd1 = colors.bold(colors.green('npx still c cp'));
+
+        let cmdTxt = '\n\t- example1: ' + cmd + ' app/path-to/MyComponent'
+            + '\n\t- example2: ' + cmd1 + ' app/path-to/MyComponent';
+        if (forLone)
+            cmdTxt = '\n\t- example1: ' + cmd + ' app/path-to/MyComponent --lone'
+                + '\n\t- example2: ' + cmd1 + ' app/path-to/MyComponent --lone';
 
         spinner.error(`Failed to create new component`);
         cmdObj.cmdMessage(
             '\n  You\'re creating component from project root folder, you ' + colors.bold(colors.red('cannot')) + ' do it'
             + '\n  without specifying the app/ or ./app/ path as the bellow example:\n'
-            + '\n\t- ' + colors.bold(colors.green('npx still create component')) + ' app/path-to/MyComponent'
+            + cmdTxt
             + '\n\n  Alternatively you can do ' + colors.bold(colors.green('cd app/')) + ' and then create your component from there'
             + '\n  since this is the root of the app'
         );

@@ -87,7 +87,7 @@ export class RouterHelper {
         if (!path.startsWith('/')) path = '/' + path;
         if (!path.endsWith('/')) path = path.slice(0, -1);
 
-        return path.toLowerCase() + '/' + resource
+        return path.toLowerCase() != '' ? '/' + resource : resource;
 
     }
 
