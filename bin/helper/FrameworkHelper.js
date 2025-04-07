@@ -3,6 +3,7 @@ import { cpSync, rmSync } from 'fs';
 import { platform } from 'os';
 import colors from 'yoctocolors';
 import { StillCmd } from '../StillCmd.js';
+import { FileHelper } from './FileHelper.js';
 
 export class FrameworkHelper {
 
@@ -14,11 +15,18 @@ export class FrameworkHelper {
     /** 
      * @param { StillCmd } cmdInstance 
      * */
-    static async createNewStillProject(cmdInstance, spinnerInstance, projectName, isLone = false) {
+    static async createNewStillProject(cmdInstance, spinnerInstance, projectName, isLone = false, isInit = false) {
+
+        if (isLone || isInit) {
+            if (FileHelper.loneProjectExists() || FileHelper.stillProjectExists())
+                return { result: false, reason: 'overwriting' };
+
+        }
 
         FrameworkHelper.cmdInstance = cmdInstance;
         spinnerInstance.start();
-        return await FrameworkHelper.runInstallStillPkg('@stilljs/core', projectName, null, { isLone });
+        const result = await FrameworkHelper.runInstallStillPkg('@stilljs/core', projectName, null, { isLone });
+        return { result };
     }
 
     static async runInstallStillPkg(
@@ -128,19 +136,19 @@ export class FrameworkHelper {
                 rmSync(`${projectName}/node_modules/`, { recursive: true });
                 rmSync(`${projectName}`, { recursive: true });
             } else {
-                cpSync(`${projectName}/node_modules/@stilljs/core/`, `${projectName}`, { recursive: true });
+                cpSync(`${projectName}/node_modules/@stilljs/core/`, `${projectName}/../`, { recursive: true });
                 rmSync(`${projectName}/node_modules/`, { recursive: true });
             }
             if (forLone) {
 
-                rmSync(`${projectName}/@still/`, { recursive: true });
-                rmSync(`${projectName}/app-setup.js`, { recursive: true });
-                rmSync(`${projectName}/app-template.js`, { recursive: true });
-                rmSync(`${projectName}/jsconfig.json`, { recursive: true });
-                rmSync(`${projectName}/package.json`, { recursive: true });
-                rmSync(`${projectName}/README.md`, { recursive: true });
-                rmSync(`${projectName}/index.html`, { recursive: true });
-                rmSync(`${projectName}/package-lock.json`, { recursive: true });
+                rmSync(`${projectName}/../@still/`, { recursive: true });
+                rmSync(`${projectName}/../app-setup.js`, { recursive: true });
+                rmSync(`${projectName}/../app-template.js`, { recursive: true });
+                rmSync(`${projectName}/../jsconfig.json`, { recursive: true });
+                rmSync(`${projectName}/../package.json`, { recursive: true });
+                rmSync(`${projectName}/../README.md`, { recursive: true });
+                rmSync(`${projectName}/../index.html`, { recursive: true });
+                rmSync(`${projectName}/`, { recursive: true });
 
             }
             return true;

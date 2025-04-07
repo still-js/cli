@@ -128,10 +128,10 @@ export class StillCmd {
         this.cmdMessage(`New project${projName}creation initiated:`);
         const spinner = yocto({ text: 'Downloading StillJS from @stilljs/core' });
 
-        const result = await helper.createNewStillProject(this, spinner, projectName, isLone);
-        if (result) {
+        const result = await helper.createNewStillProject(this, spinner, projectName, isLone, isInit);
+        if (result.result !== false) {
 
-            spinner.success(`Project ${colors.bold(projectName)} created`);
+            spinner.success(`Project${projName}created`);
             this.newCmdLine();
             const unwrapSpinner = yocto({ text: 'Unwrapping root folder' });
 
@@ -139,17 +139,33 @@ export class StillCmd {
                 helper.unwrapStillJSFolder(projectName, isLone, isInit);
                 unwrapSpinner.success(`Process creation ran successfully`)
             } catch (error) {
-                unwrapSpinner.error(`Error on unwrapping ${colors.bold(projectName)} project`);
+                unwrapSpinner.error(`Error on unwrapping${projName}project`);
             }
 
-            this.cmdMessage(`\t- type ${colors.bold(colors.green(`cd ${projectName}`))}  to enter project folder`);
-            this.cmdMessage(`\t  and then type ${colors.bold(colors.green('npm run dev'))}  to open in the browser`);
+            if (isLone || isInit) {
+                const loneDocLink = `https://still-js.github.io/stilljs-doc/installation-and-running-cdn/#cdn-basic-code-sample`;
+                this.cmdMessage(`\t- You're all set, use still-cli to generate the your component`);
+                if (isLone) {
+                    this.cmdMessage(`\t  example: ${colors.bold(colors.green('npx still create component app/MyComponen --lone'))}`);
+                    this.cmdMessage(`\t  and after creating it you can embed them, follow the example at the bellow link:`);
+                    this.cmdMessage('\t\t' + colors.underline(loneDocLink));
+                }
+            } else {
+                this.cmdMessage(`\t- type ${colors.bold(colors.green(`cd ${projectName}`))}  to enter project folder`);
+                this.cmdMessage(`\t  and then type ${colors.bold(colors.green('npm run dev'))}  to open in the browser`);
+            }
             this.newCmdLine();
 
         }
 
-        if (!result)
-            spinner.error(`Failed to create ${colors.bold(projectName)} project`);
+        if (result.result === false) {
+            this.cmdMessage(colors.bgRed(`Failed to create${projName}project`));
+            if (result.reason === 'overwriting') {
+                this.cmdMessage(`\t- Seems like you're accidentally overriding an exsiting project because especific`);
+                this.cmdMessage(`\t  files (e.g. ${colors.underline(colors.bold('app/'))} and ${colors.underline(colors.bold('route.map.js'))}) files are present in the current folder`);
+            }
+            this.newCmdLine();
+        }
     }
 
     async createComponent(opts) {

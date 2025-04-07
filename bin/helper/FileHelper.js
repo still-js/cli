@@ -13,6 +13,15 @@ export class FileHelper {
         'app', 'route.map.js'
     ];
 
+    static loneProjectExists() {
+        return FileHelper.rootFilesForLone.filter(r => fs.existsSync(`${process.env.PWD}/${r}`)).length
+            === FileHelper.rootFilesForLone.length
+    }
+
+    static stillProjectExists() {
+        return FileHelper.rootFiles.filter(r => fs.existsSync(`${process.env.PWD}/${r}`)).length
+            === FileHelper.rootFiles.length
+    }
 
     static wasRootFolderReached(actualDir, forLoneCmp = false) {
 
