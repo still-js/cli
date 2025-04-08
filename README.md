@@ -12,10 +12,100 @@ StillJS is a Web UI Framework which helps you to build your user interfaces whic
 
 <br>
 
-#### Documentation
-A complete documentation is not yet available as the work is in progress, anyway there is quite of content and documentation available on the Github, <a href="https://still-js.github.io/stilljs-doc/" target="_blank">click here</a>.
+#### stilljs Command option overview
+Once installed globally, the command can be called by its aliaes which are st or still, will use still for the coming examples:
+<table style="width: 100%;">
+    <tr style="font-weight: bold;">
+        <td>
+            Command
+        </td>
+        <td>
+            Params
+        </td>
+        <td>
+            Description
+        </td>
+        <td>
+            Example
+        </td>
+    </tr>
+    <tr>
+        <td>
+            init
+        </td>
+        <td>
+            N/A
+        </td>
+        <td>
+            Initiates a new project in the current folder
+        </td>
+        <td>
+            npx still <b>init</b>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            lone
+        </td>
+        <td>
+            N/A
+        </td>
+        <td>
+            Setup the files for a Lone/CDN based project using still
+        </td>
+        <td>
+            npx still <b>lone</b>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            serve
+        </td>
+        <td>
+            N/A
+        </td>
+        <td>
+            Runs the app and open in th browser
+        </td>
+        <td>
+            npx still <b>serve</b>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            create
+        </td>
+        <td>
+            <b>--lone</b> : Creates a Lone component within ad Lone/CDN based component
+        </td>
+        <td>
+            Creates a new component in both regular Still project or Lone/CDN based project, and add a new route to the <b><i>route.map.js</i></b> file
+        </td>
+        <td>
+            npx still <b>create</b> component path-to/MyComponent
+        </td>
+    </tr>
+    <tr>
+        <td>
+            route
+        </td>
+        <td>
+            N/A
+        </td>
+        <td>
+            Display the routes in the project
+        </td>
+        <td>
+            npx still <b>route</b> list
+        </td>
+    </tr>
+</table>
 
-The <b>@stilljs/core</b> itself is the set of classes, structures and features concerning the Framework, in order to use it we need to instal the cli tool as follow:
+<br>
+<br>
+
+#### Brief Documentation
+A complete documentation is not yet available as the work is in progress, anyway there is quite of content and documentation available on the Github, <a href="https://still-js.github.io/stilljs-doc/" target="_blank">click here</a>.
 
 <br>
 
