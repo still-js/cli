@@ -174,19 +174,6 @@ export class StillCmd {
 
     async createComponent(opts) {
 
-        if (!FileHelper.loneProjectExists() && !FileHelper.stillProjectExists()) {
-            const docLink = `https://still-js.github.io/stilljs-doc/installation-and-running-cdn/`;
-            this.newCmdLine();
-            this.cmdMessage(colors.red(`${colors.bold('Wrong Folder')}: `));
-            this.cmdMessage(
-                `\tYou're not inside a folder with ${colors.bold('Still')} or ${colors.bold('Still Lone/CDN based')} folder structure, follow the documentation:`
-                + '\n\t  ' + colors.underline(docLink)
-            );
-            this.newCmdLine();
-            return;
-        }
-
-
         if (opts.isLone) {
 
             if (FileHelper.stillProjectExists()) {
@@ -329,7 +316,7 @@ export class StillCmd {
                     spinnerObj.success(`Component ${cmpFullPath} created successfully`);
 
                     const routeSpinner = yocto({ text: `Creating the route` }).start();
-                    const addRoute = RouterHelper.updateProjectRoutes(routeFile, cmpName, cmpFullPath);
+                    const addRoute = RouterHelper.updateProjectRoutes(routeFile, cmpName, cmpFullPath, isRootFolder);
                     if (addRoute)
                         routeSpinner.success(`New route added with path ${cmpFullPath}`);
                     else {

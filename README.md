@@ -8,12 +8,12 @@ This is the CLI tool for StillJS Framework
 
 ## The Still.js Framework
 
-StillJS is a Web UI Framework which helps you to build your user interfaces which uses Vanilla JavaScript, yet the component approach is the main focus allowing you to modulrize your UI in the same fashion we do with React and Angular. visit the <a href="https://still-js.github.io/stilljs-doc/">official documentation</a> for deeper overview.
+StillJS is a Web UI Framework which helps you to build your user interfaces which uses Vanilla JavaScript, yet the component approach is the main focus allowing you to modulrize your UI in the same fashion we do with React and Angular. visit the <a href="https://still-js.github.io/stilljs-doc/" target="_blank">official documentation</a> for deeper overview.
 
 <br>
 
-#### stilljs Command option overview
-Once installed globally, the command can be called by its aliaes which are st or still, will use still for the coming examples:
+#### still-cli Commands options overview
+Once installed globally, the command can be called by its aliaes which are <b>`st`</b> or <b>`still`</b>, will use still for the coming examples:
 <table style="width: 100%;">
     <tr style="font-weight: bold;">
         <td>
@@ -105,13 +105,13 @@ Once installed globally, the command can be called by its aliaes which are st or
 <br>
 
 #### Brief Documentation
-A complete documentation is not yet available as the work is in progress, anyway there is quite of content and documentation available on the Github, <a href="https://still-js.github.io/stilljs-doc/" target="_blank">click here</a>.
+A complete documentation is not yet available, as the work is in progress, anyway there is quite of content and documentation available on the Github, <a href="https://still-js.github.io/stilljs-doc/" target="_blank">click here</a>.
 
 <br>
 
 #### 1. Instalation
 
-The official documentation concerning environment set up and project creation can be found <a href="https://still-js.github.io/stilljs-doc/installation-and-running/" target="_blank">here</a>.
+The official documentation concerning environment set up and project creation can be found <a href="https://still-js.github.io/stilljs-doc/installation-and-running/" target="_blank">here</a>; cli tools needs to be installed globally as follow bellow:
 
 ```
 npm i @stilljs/cli -g
@@ -167,19 +167,23 @@ export class HomeComponent extends ViewComponent {
     `;
 }
 ```
+<br>
 
 #### 3.1 Running the project
 
-From the project folder, use still-cli to run the app as follow:
+From the project root folder, use still-cli to run the app as follow:
 ```
 npx still app serve
 ```
+
+#### You're all set with Still.js project, Enjoy your coding! <b style="font-size: 50px; color: orange;">&#x263B;</b>
+
 <br>
 <hr>
 
 #### Alternative from CDN
 
-First thing first, Still.js CDN base project are also named Lone component, and it's recommender for them to be create using still-cli in addition to add to CDN in the page, as both the `app/` folder and the `route.map.js` files are needed even in this case, but the framework will be served from the CDN itself, hence, project structure can be as follow:
+First thing first, Still.js CDN based project are also named Lone component, and it's recommender for them to be create using <b>`still-cli`</b> in addition to add to CDN in the page file itself (e.g. <b>.html</b>), as both the <b>`app/`</b> folder and the <b>`route.map.js`</b> file are needed even in this case, but the framework will be served from the CDN itself, hence, project structure can be as follow:
 <br>
 
 ##### Project structure example:
@@ -187,12 +191,10 @@ First thing first, Still.js CDN base project are also named Lone component, and 
     project-name //My project root folder
     |___ microfrontend // This is simply for isolating from my project files
     |     |__ app/ //Component will be placed in here following the folder structure as I will
-    |     |    |__ //MyCustomComponent.js -- This component will be created bellow
+    |     |    |__ //MyCustomComponent.js -- This component will be created bellow (point b.)
     |     |__ route.map.js //still-cli will add the route automatically when creating a component
     |     | 
-    |     | 
-    |__ my-project-file1.ts 
-    |__ another-project-file.js
+    // Bellow are the files of my project placed in the project root folder
     |__ index.html
     |__ my-project-folder/
     |__ ... // Additional files from my project
@@ -203,7 +205,7 @@ First thing first, Still.js CDN base project are also named Lone component, and 
 <br>
 
 
-##### a. Creating Lone/CD based project:
+##### a. Creating Lone/CDN based project:
 Creating the project inside the `microfrontend/` folder:
 ```
 npx still lone
@@ -213,7 +215,7 @@ npx still lone
 
 
 ##### b. Creating the component from inside the `microfrontend/` folder:
-
+Using <b>`--lone`</b> peram at the end is mandatory when creating a component within a CND based project.
 ```js
 npx still create component app/MyCustomComponent --lone
 ```
@@ -240,12 +242,10 @@ npx still create component app/MyCustomComponent --lone
 </head>
 
 <body>
-
     <div>
-        <!-- Bellow component (MyCustomComponent) needs to be created -->
+        <!-- Bellow component (MyCustomComponent) needs to be created as in step previous step (step c.) -->
         <st-element component="MyCustomComponent"></st-element>
     </div>
-
 </body>
 ```
 
@@ -259,8 +259,9 @@ npx live-server
 ```
 <br>
 
-When using CDN Still.js provides also with the capability of creating powerfull Microfrontend solutions in addition to regular component approach, follow the official documentation on how to set it up <a href="https://still-js.github.io/stilljs-doc/installation-and-running-cdn/" target="_blank">here</a>.
+When using CDN <b>Still.js</b> provides also with the capability of creating <b>powerfull Microfrontend</b> solutions in addition to regular component approach, follow the official documentation on how to set it up <a href="https://still-js.github.io/stilljs-doc/installation-and-running-cdn/" target="_blank">here</a>.
 
 
 <br>
-<br>
+
+# You're all set, Congrats!
