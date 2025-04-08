@@ -3,6 +3,44 @@
 This log contains all the changes which takes place for StillJS CLI tools.
  
 
+## [Released] - 2025-04-07
+## [Version] - 1.7.2
+Adjustments, new features and improvements on the still-cli.
+ 
+### Added
+- <b>MEDIUM</b> - Added init command to for project initialization.
+    <b>&nbsp;&nbsp;&nbsp;&nbsp;example: </b> `npx still init`
+
+<br>
+
+- <b>MEDIUM</b> - Added lone command to for Lone/CDN based project initialization.
+    <b>&nbsp;&nbsp;&nbsp;&nbsp;example: </b> `npx still lone`
+
+<br>
+
+- <b>MEDIUM</b> - Added serve command for running the application.
+    <b>&nbsp;&nbsp;&nbsp;&nbsp;example: </b> `npx still serve`
+
+<br>
+
+- <b>MAJOR</b> - `--lone` para to the create command for when creating a component within a Lone/CDN base project.
+    <b>&nbsp;&nbsp;&nbsp;&nbsp;example: </b> `npx still create component path-to/MyComponent --lone`
+
+
+### Removed
+- App creation under `stiil create` command.
+
+<br>
+<hr>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
+
+
+
+
+ 
+
 ## [Released] - 2025-03-20
 ## [Version] - 1.6.2
 Adjustments, new features and improvements on the still-cli.
