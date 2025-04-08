@@ -68,8 +68,8 @@ export class FileHelper {
     }
 
     static componentTemplate = (cmpName, superClsPath) =>
-        'import { ViewComponent } from ' + superClsPath
-        + '\n\nexport class ' + cmpName + ' extends ViewComponent {\n'
+        superClsPath
+        + 'export class ' + cmpName + ' extends ViewComponent {\n'
         + '\n'
         + '\tisPublic = true;'
         + '\n'
@@ -88,14 +88,18 @@ export class FileHelper {
         + '}';
 
 
-    static componentModel(cmpName, importPath) {
-        const superClsPath = `"${importPath}/@still/component/super/ViewComponent.js";`;
+    static componentModel(cmpName, importPath, isLone) {
+        let superClsPath = '';
+        if (!isLone) {
+            superClsPath = `"${importPath}/@still/component/super/ViewComponent.js";`;
+            superClsPath = `import { ViewComponent } from ${superClsPath}\n\n`;
+        }
         return FileHelper.componentTemplate(cmpName, superClsPath);
     }
 
-    static createComponentFile(cmpName, rootFolder, dirPath, fileName) {
+    static createComponentFile(cmpName, rootFolder, dirPath, fileName, isLone) {
 
-        const cmpContent = FileHelper.componentModel(cmpName, rootFolder);
+        const cmpContent = FileHelper.componentModel(cmpName, rootFolder, isLone);
         const isValidDir = dirPath != '' && dirPath != undefined;
         const cmpDirPath = isValidDir ? dirPath : '';
         const cmpFullPath = `${isValidDir ? cmpDirPath + '/' : ''}${fileName}.js`;

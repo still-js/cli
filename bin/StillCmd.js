@@ -173,13 +173,39 @@ export class StillCmd {
     }
 
     async createComponent(opts) {
-        if (opts.isLone) this.createLoneComponent(opts);
+
+        if (!FileHelper.loneProjectExists() && !FileHelper.stillProjectExists()) {
+            const docLink = `https://still-js.github.io/stilljs-doc/installation-and-running-cdn/`;
+            this.newCmdLine();
+            this.cmdMessage(colors.red(`${colors.bold('Wrong Folder')}: `));
+            this.cmdMessage(
+                `\tYou're not inside a folder with ${colors.bold('Still')} or ${colors.bold('Still Lone/CDN based')} folder structure, follow the documentation:`
+                + '\n\t  ' + colors.underline(docLink)
+            );
+            this.newCmdLine();
+            return;
+        }
+
+
+        if (opts.isLone) {
+
+            if (FileHelper.stillProjectExists()) {
+                this.newCmdLine();
+                this.cmdMessage(colors.red(`${colors.bold('Wrong Component creation instructions')}: `));
+                this.cmdMessage(
+                    `\tYou're inside a regular ${colors.bold('Still')} project, you cannot use --lone parameter\n`
+                );
+                this.newCmdLine();
+                return;
+            }
+            this.createLoneComponent(opts);
+        }
         else {
             if (FileHelper.loneProjectExists() && !FileHelper.stillProjectExists()) {
                 this.newCmdLine();
                 this.cmdMessage(colors.red(`${colors.bold('Wrong Component creation instructions')}: `));
                 this.cmdMessage(
-                    `\tYou're inside a Still ${colors.bold('Lone/CDN')} based project, please user --lone as the example:\n`
+                    `\tYou're inside a Still ${colors.bold('Lone/CDN')} based project, you need to use --lone parameter as the examples:\n`
                     + '\texample1: ' + colors.bold(colors.green('npx still create component path-to/MyComponent --lone'))
                     + '\n\texample2: ' + colors.bold(colors.green('npx still c cp path-to/MyComponent --lone'))
                 );
@@ -297,7 +323,7 @@ export class StillCmd {
                 try {
 
                     const cmpFullPath = FileHelper.createComponentFile(
-                        cmpName, rootFolder, dirPath, fileName
+                        cmpName, rootFolder, dirPath, fileName, opts.isLone
                     );
 
                     spinnerObj.success(`Component ${cmpFullPath} created successfully`);
