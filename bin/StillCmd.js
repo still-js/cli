@@ -196,29 +196,36 @@ export class StillCmd {
 
     async createComponent(opts) {
 
-        if (opts.isLone) {
+        let cmpName = opts.name.startsWith('./') ? opts.name.replace('./', '') : opts.name;
+        let cmpPath = cmpName.split('/');
+        cmpName = cmpPath.at(-1), cmpPath.pop();
 
+        if (cmpName.toLowerCase().endsWith('.js')) {
+            this.cmdMessage(colors.red(`${colors.bold('\nWrong Component creation instructions')}: `));
+            this.cmdMessage(
+                `\tComponent name cannot have extension type (e.g. .js) nor special carechter\n`
+            );
+            return;
+        }
+
+        if (opts.isLone) {
             if (FileHelper.stillProjectExists())
                 return this.wrongProjectTypeWarning('still');
-            this.createLoneComponent(opts);
+            this.createLoneComponent(opts, cmpName, cmpPath);
         }
         else {
             if (FileHelper.loneProjectExists() && !FileHelper.stillProjectExists())
                 return this.wrongProjectTypeWarning('lone');
-            this.createNewComponent(opts)
+            this.createNewComponent(opts, cmpName, cmpPath);
         };
     }
 
-    async createNewComponent(opts) {
+    async createNewComponent(opts, cmpName, cmpPath) {
 
         StillCmd.stillProjectRootDir = [];
         this.newCmdLine();
         const spinner = yocto({ text: `Creating new component ${opts.name}` }).start();
         const isRootFolder = FileHelper.isItRootFolder(spinner, this, false).flag;
-
-        let cmpName = opts.name.startsWith('./') ? opts.name.replace('./', '') : opts.name;
-        let cmpPath = cmpName.split('/');
-        cmpName = cmpPath.at(-1), cmpPath.pop();
 
         if (isRootFolder && cmpPath[0] != 'app' && !opts.isLone)
             return FileHelper.wrongFolderCmpCreationError(spinner, this);
@@ -281,16 +288,12 @@ export class StillCmd {
 
     }
 
-    async createLoneComponent(opts) {
+    async createLoneComponent(opts, cmpName, cmpPath) {
 
         StillCmd.stillProjectRootDir = [];
         this.newCmdLine();
         const spinner = yocto({ text: `Creating new component ${opts.name}` }).start();
         const isRootFolder = FileHelper.isItRootFolder(spinner, this, false, true).flag;
-
-        let cmpName = opts.name.startsWith('./') ? opts.name.replace('./', '') : opts.name;
-        let cmpPath = cmpName.split('/');
-        cmpName = cmpPath.at(-1), cmpPath.pop();
 
         if (isRootFolder && cmpPath[0] != 'app' && opts.isLone)
             return FileHelper.wrongFolderCmpCreationError(spinner, this, opts.isLone);
