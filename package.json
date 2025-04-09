@@ -1,13 +1,19 @@
 {
   "name": "@stilljs/cli",
-  "version": "1.7.4",
+  "version": "1.7.8",
   "description": "This is the CLI tool for StillJS Framework",
   "main": "./bin/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "type": "module",
-  "keywords": ["StillJS CLI tool","CLI oool","StillJS","StillJS Framework","Web Frontent Framework"],
+  "keywords": [
+    "StillJS CLI tool",
+    "CLI oool",
+    "StillJS",
+    "StillJS Framework",
+    "Web Frontent Framework"
+  ],
   "author": {
     "name": "Nakassony Bernardo",
     "email": "sonybernardo_10@hotmail.com"

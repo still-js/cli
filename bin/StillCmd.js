@@ -173,33 +173,38 @@ export class StillCmd {
         }
     }
 
+    wrongProjectTypeWarning(type = null, spinner = null) {
+        if (spinner) spinner.error(colors.red(`Faile to create the component follow the cause:`))
+        if (type === 'still') {
+            this.newCmdLine();
+            this.cmdMessage(colors.red(`${colors.bold('Wrong Component creation instructions')}: `));
+            this.cmdMessage(
+                `\tYou're inside a regular ${colors.bold('Still')} project, you cannot use --lone parameter\n`
+            );
+            this.newCmdLine();
+        } else if (type === 'lone') {
+            this.newCmdLine();
+            this.cmdMessage(colors.red(`${colors.bold('Wrong Component creation instructions')}: `));
+            this.cmdMessage(
+                `\tYou're inside a Still ${colors.bold('Lone/CDN')} based project, you need to use --lone parameter as the examples:\n`
+                + '\texample1: ' + colors.bold(colors.green('npx still create component path-to/MyComponent --lone'))
+                + '\n\texample2: ' + colors.bold(colors.green('npx still c cp path-to/MyComponent --lone'))
+            );
+            this.newCmdLine();
+        }
+    }
+
     async createComponent(opts) {
 
         if (opts.isLone) {
 
-            if (FileHelper.stillProjectExists()) {
-                this.newCmdLine();
-                this.cmdMessage(colors.red(`${colors.bold('Wrong Component creation instructions')}: `));
-                this.cmdMessage(
-                    `\tYou're inside a regular ${colors.bold('Still')} project, you cannot use --lone parameter\n`
-                );
-                this.newCmdLine();
-                return;
-            }
+            if (FileHelper.stillProjectExists())
+                return this.wrongProjectTypeWarning('still');
             this.createLoneComponent(opts);
         }
         else {
-            if (FileHelper.loneProjectExists() && !FileHelper.stillProjectExists()) {
-                this.newCmdLine();
-                this.cmdMessage(colors.red(`${colors.bold('Wrong Component creation instructions')}: `));
-                this.cmdMessage(
-                    `\tYou're inside a Still ${colors.bold('Lone/CDN')} based project, you need to use --lone parameter as the examples:\n`
-                    + '\texample1: ' + colors.bold(colors.green('npx still create component path-to/MyComponent --lone'))
-                    + '\n\texample2: ' + colors.bold(colors.green('npx still c cp path-to/MyComponent --lone'))
-                );
-                this.newCmdLine();
-                return;
-            }
+            if (FileHelper.loneProjectExists() && !FileHelper.stillProjectExists())
+                return this.wrongProjectTypeWarning('lone');
             this.createNewComponent(opts)
         };
     }
@@ -223,8 +228,8 @@ export class StillCmd {
 
         await this.getRootDirThenRunCallback(fileMetadata, spinner, null,
 
-            async ({ cmpPath, cmpName, routeFile, filePath }, spinnerObj) => {
-
+            async ({ cmpPath, cmpName, routeFile, filePath, wrongProjectType }, spinnerObj) => {
+                if (wrongProjectType) return this.wrongProjectTypeWarning('lone', spinner);
                 const doesCmpExists = RouterHelper.checkIfRouteExists(routeFile, cmpName);
                 if (doesCmpExists) {
                     this.newCmdLine();
@@ -295,8 +300,8 @@ export class StillCmd {
 
         await this.getRootDirThenRunCallback(fileMetadata, spinner, null,
 
-            async ({ cmpPath, cmpName, routeFile, filePath }, spinnerObj) => {
-
+            async ({ cmpPath, cmpName, routeFile, filePath, wrongProjectType }, spinnerObj) => {
+                if (wrongProjectType) return this.wrongProjectTypeWarning('still', spinner);
                 const doesCmpExists = RouterHelper.checkIfRouteExists(routeFile, cmpName);
                 if (doesCmpExists) {
                     spinnerObj.error(`Component with name ${cmpName} already exists, please choose another name to avoid conflict`);
@@ -409,7 +414,6 @@ export class StillCmd {
             this.filePathTracker.push(currPath);
         }
 
-
         if (callNum == 10 && fileMetadata.isLone)
             return FileHelper.noLoneProjectFolderError(spinner, this);
 
@@ -433,11 +437,12 @@ export class StillCmd {
         }
 
         spinner.text = 'Serching project root folder';
-        if (FileHelper.wasRootFolderReached(actualDir, fileMetadata?.isLone).flag) {
+        const { flag, wrongProjectType } = FileHelper.wasRootFolderReached(actualDir, fileMetadata?.isLone);
+        if (flag) {
             const filePath = this.filePathTracker.reverse().join('/')
             this.cmdMessage(` -- Validated Still.js project folder`);
             yocto().start().success(`Found project root folder`);
-            fileMetadata = { ...fileMetadata, filePath }
+            fileMetadata = { ...fileMetadata, filePath, wrongProjectType };
             await cb({ ...fileMetadata, routeFile: `${actualDir}/route.map.js` }, spinner);
         } else {
             StillCmd.stillProjectRootDir.push('..');

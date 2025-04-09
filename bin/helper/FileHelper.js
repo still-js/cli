@@ -25,20 +25,28 @@ export class FileHelper {
 
     static wasRootFolderReached(actualDir, forLoneCmp = false) {
 
+        let wrongProjectType = false;
         const rootFolderStat = forLoneCmp
             ? FileHelper.rootFilesForLone
             : FileHelper.rootFiles;
 
         const files = fs.readdirSync(actualDir);
 
-        let counter = 0;
+        let counter = 0, wrongCounter = 0;
         for (const file of files) {
             if (rootFolderStat.includes(file)) counter++;
         }
 
+        for (const file of files) {
+            if (FileHelper.rootFiles.includes(file)) wrongCounter++;
+        }
+        const totalMatch = FileHelper.rootFiles.length == wrongCounter;
+        if (forLoneCmp && totalMatch) wrongProjectType = true;
+        if (!forLoneCmp && !totalMatch) wrongProjectType = true;
+
         return {
             flag: counter == rootFolderStat.length,
-            actualDir
+            actualDir, wrongProjectType
         };
     }
 
