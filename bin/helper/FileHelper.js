@@ -23,9 +23,9 @@ export class FileHelper {
             === FileHelper.rootFiles.length
     }
 
-    static wasRootFolderReached(actualDir, forLoneCmp = false) {
+    static wasRootFolderReached(actualDir, forLoneCmp = false, noFileOperation = false) {
 
-        let wrongProjectType = false;
+        let wrongProjectType = false, foundLone = false;
         const rootFolderStat = forLoneCmp
             ? FileHelper.rootFilesForLone
             : FileHelper.rootFiles;
@@ -40,12 +40,17 @@ export class FileHelper {
         for (const file of files) {
             if (FileHelper.rootFiles.includes(file)) wrongCounter++;
         }
+
+        if (noFileOperation)
+            foundLone = (counter == FileHelper.rootFilesForLone.length - 1);
+        if (FileHelper.loneProjectExists()) foundLone = true;
+
         const totalMatch = FileHelper.rootFiles.length == wrongCounter;
         if (forLoneCmp && totalMatch) wrongProjectType = true;
         if (!forLoneCmp && !totalMatch) wrongProjectType = true;
 
         return {
-            flag: counter == rootFolderStat.length,
+            flag: (counter == rootFolderStat.length) || foundLone,
             actualDir, wrongProjectType
         };
     }

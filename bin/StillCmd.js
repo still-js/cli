@@ -417,7 +417,7 @@ export class StillCmd {
             this.filePathTracker.push(currPath);
         }
 
-        if (callNum == 10 && fileMetadata.isLone)
+        if (callNum == 10 && fileMetadata?.isLone)
             return FileHelper.noLoneProjectFolderError(spinner, this);
 
         if (fileMetadata?.isRootFolder && fileMetadata?.isLone)
@@ -440,7 +440,7 @@ export class StillCmd {
         }
 
         spinner.text = 'Serching project root folder';
-        const { flag, wrongProjectType } = FileHelper.wasRootFolderReached(actualDir, fileMetadata?.isLone);
+        const { flag, wrongProjectType } = FileHelper.wasRootFolderReached(actualDir, fileMetadata?.isLone, fileMetadata == null);
         if (flag) {
             const filePath = this.filePathTracker.reverse().join('/')
             this.cmdMessage(` -- Validated Still.js project folder`);
