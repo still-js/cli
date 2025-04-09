@@ -311,10 +311,10 @@ export class StillCmd {
 
                 try {
 
-                    const cmpFullPath = `${filePath}/${cmpName}.js`;
-                    FileHelper.createComponentFile(
+                    let cmpFullPath = FileHelper.createComponentFile(
                         cmpName, rootFolder, dirPath, fileName, opts.isLone
                     );
+                    if (!isRootFolder) cmpFullPath = `${filePath}/${cmpName}.js`;
 
                     spinnerObj.success(`Component ${cmpFullPath} created successfully`);
                     const routeSpinner = yocto({ text: `Creating the route` }).start();

@@ -23,9 +23,11 @@ export class RouterHelper {
         let componentRoute = cmpPath.replace(`${cmpName}.js`, '');
         let url = RouterHelper.parseUrlPath(cmpName, componentRoute);
 
-        if (componentRoute.at(-1) == '/')
-            componentRoute = componentRoute.slice(0, -1);
-
+        if (componentRoute.at(-1) == '/') componentRoute = componentRoute.slice(0, -1);
+        if (path === undefined) {
+            const parsingPath = cmpPath.split('/');
+            if (parsingPath.length > 0) path = parsingPath.slice(0, -1).join('/')
+        }
 
         stillRoutesMap.viewRoutes.regular[cmpName] = { path, url };
 
