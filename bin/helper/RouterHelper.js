@@ -13,7 +13,7 @@ export class RouterHelper {
 
     }
 
-    static updateProjectRoutes(file, cmpName, cmpPath, isRootFolder = false) {
+    static updateProjectRoutes(file, cmpName, cmpPath, path) {
 
         let routesContent = fs.readFileSync(file, { encoding: 'utf-8' });
         routesContent = routesContent.replace(/export(\s){0,1}const(\s)/g, 'global.');
@@ -26,16 +26,8 @@ export class RouterHelper {
         if (componentRoute.at(-1) == '/')
             componentRoute = componentRoute.slice(0, -1);
 
-        let pathInit = componentRoute.startsWith('app/') ? '' : 'app/';
-        //Only being applied for Lone component
-        if (isRootFolder) {
-            pathInit = '';
-            componentRoute = componentRoute + '/'
-        }
 
-        stillRoutesMap.viewRoutes.regular[cmpName] = {
-            path: `${pathInit}${componentRoute}`, url
-        }
+        stillRoutesMap.viewRoutes.regular[cmpName] = { path, url };
 
         const identConfig = { indent_size: 4, space_in_empty_paren: true };
         const newRoutesContent = ''
@@ -46,7 +38,7 @@ export class RouterHelper {
 
         try {
             fs.writeFileSync(file, newRoutesContent, { encoding: 'utf-8' });
-            return true;
+            return path;
         } catch (error) {
             console.log(`Error on generating the `, error.message);
             return false;

@@ -14,6 +14,7 @@ export class StillCmd {
         'COMPONENT': 'COMPONENT',
         'PROJECT': 'PROJECT',
     }
+    filePathTracker = [];
 
     constructor() {
 
@@ -222,7 +223,7 @@ export class StillCmd {
 
         await this.getRootDirThenRunCallback(fileMetadata, spinner, null,
 
-            async ({ cmpPath, cmpName, routeFile }, spinnerObj) => {
+            async ({ cmpPath, cmpName, routeFile, filePath }, spinnerObj) => {
 
                 const doesCmpExists = RouterHelper.checkIfRouteExists(routeFile, cmpName);
                 if (doesCmpExists) {
@@ -243,14 +244,15 @@ export class StillCmd {
 
                 try {
 
-                    const cmpFullPath = FileHelper.createComponentFile(
+                    const cmpFullPath = `${filePath}/${cmpName}.js`;
+                    FileHelper.createComponentFile(
                         cmpName, rootFolder, dirPath, fileName
                     );
 
                     spinnerObj.success(`Component ${cmpFullPath} created successfully`);
 
                     const routeSpinner = yocto({ text: `Creating the route` }).start();
-                    const addRoute = RouterHelper.updateProjectRoutes(routeFile, cmpName, cmpFullPath);
+                    const addRoute = RouterHelper.updateProjectRoutes(routeFile, cmpName, cmpFullPath, filePath);
                     if (addRoute)
                         routeSpinner.success(`New route added with path ${cmpFullPath}`);
                     else {
@@ -293,7 +295,7 @@ export class StillCmd {
 
         await this.getRootDirThenRunCallback(fileMetadata, spinner, null,
 
-            async ({ cmpPath, cmpName, routeFile }, spinnerObj) => {
+            async ({ cmpPath, cmpName, routeFile, filePath }, spinnerObj) => {
 
                 const doesCmpExists = RouterHelper.checkIfRouteExists(routeFile, cmpName);
                 if (doesCmpExists) {
@@ -309,23 +311,21 @@ export class StillCmd {
 
                 try {
 
-                    const cmpFullPath = FileHelper.createComponentFile(
+                    const cmpFullPath = `${filePath}/${cmpName}.js`;
+                    FileHelper.createComponentFile(
                         cmpName, rootFolder, dirPath, fileName, opts.isLone
                     );
 
                     spinnerObj.success(`Component ${cmpFullPath} created successfully`);
-
                     const routeSpinner = yocto({ text: `Creating the route` }).start();
-                    const addRoute = RouterHelper.updateProjectRoutes(routeFile, cmpName, cmpFullPath, isRootFolder);
-                    if (addRoute)
-                        routeSpinner.success(`New route added with path ${cmpFullPath}`);
+                    const addRoute = RouterHelper.updateProjectRoutes(routeFile, cmpName, cmpFullPath, filePath);
+                    if (addRoute) routeSpinner.success(`New route added with path ${cmpFullPath}`);
                     else {
                         routeSpinner.error(`
                             Failed to a route for ${cmpName}, 
                             you can anyway add it manually in the route.map.js file
                         `);
                     }
-
                     this.newCmdLine();
 
                 } catch (error) {
@@ -397,10 +397,18 @@ export class StillCmd {
     /**
      *  @param {{ cmpPath, cmpName, routeFile, isLone }, spinnerObj} cb 
      */
-    async getRootDirThenRunCallback(fileMetadata, spinner, dir, cb, callNum = 0) {
+    async getRootDirThenRunCallback(fileMetadata, spinner, dir, cb, callNum = 0, countFolderBack = 0) {
 
         let enteredPath = fileMetadata?.cmpPath?.length ? fileMetadata.cmpPath.join('/') : '';
         let actualDir = dir || (`${process.cwd()}/${enteredPath}`);
+
+        if (actualDir.endsWith('/..')) {
+            countFolderBack++;
+            const sliceIdx = eval(`-${countFolderBack}`);
+            const currPath = actualDir.split('/').slice(0, sliceIdx).slice(sliceIdx)[0];
+            this.filePathTracker.push(currPath);
+        }
+
 
         if (callNum == 10 && fileMetadata.isLone)
             return FileHelper.noLoneProjectFolderError(spinner, this);
@@ -414,22 +422,26 @@ export class StillCmd {
         if (!fs.existsSync(actualDir + '/')) {
 
             const newDirPath = actualDir.split('/');
-            newDirPath.pop();
+
+            const dirName = newDirPath.pop();
+            this.filePathTracker.push(dirName);
             actualDir = newDirPath.join('/');
             StillCmd.stillProjectRootDir.push('..');
 
-            this.getRootDirThenRunCallback(fileMetadata, spinner, `${actualDir}`, cb, (callNum + 1));
+            this.getRootDirThenRunCallback(fileMetadata, spinner, `${actualDir}`, cb, (callNum + 1), countFolderBack);
             return;
         }
 
-        this.cmdMessage(`  Serching project root folder ${actualDir}`);
-
+        spinner.text = 'Serching project root folder';
         if (FileHelper.wasRootFolderReached(actualDir, fileMetadata?.isLone).flag) {
-            this.cmdMessage(`  Found project root folder`);
+            const filePath = this.filePathTracker.reverse().join('/')
+            this.cmdMessage(` -- Validated Still.js project folder`);
+            yocto().start().success(`Found project root folder`);
+            fileMetadata = { ...fileMetadata, filePath }
             await cb({ ...fileMetadata, routeFile: `${actualDir}/route.map.js` }, spinner);
         } else {
             StillCmd.stillProjectRootDir.push('..');
-            await this.getRootDirThenRunCallback(fileMetadata, spinner, `${actualDir}/..`, cb, (callNum + 1));
+            await this.getRootDirThenRunCallback(fileMetadata, spinner, `${actualDir}/..`, cb, (callNum + 1), countFolderBack);
             return;
         }
 
