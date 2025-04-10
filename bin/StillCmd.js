@@ -440,8 +440,11 @@ export class StillCmd {
         }
 
         spinner.text = 'Serching project root folder';
-        const { flag, wrongProjectType } = FileHelper.wasRootFolderReached(actualDir, fileMetadata?.isLone, fileMetadata == null);
+        let { flag, wrongProjectType } = FileHelper.wasRootFolderReached(actualDir, fileMetadata?.isLone, fileMetadata == null);
         if (flag) {
+            if (FileHelper.stillProjectExists()) {
+                wrongProjectType = false, actualDir = process.env.PWD;
+            }
             const filePath = this.filePathTracker.reverse().join('/')
             this.cmdMessage(` -- Validated Still.js project folder`);
             yocto().start().success(`Found project root folder`);
