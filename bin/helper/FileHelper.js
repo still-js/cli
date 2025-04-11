@@ -111,7 +111,7 @@ export class FileHelper {
     }
 
     static createComponentFile(cmpName, rootFolder, dirPath, fileName, isLone) {
-
+        if (FileHelper.stillProjectExists()) rootFolder = '../' + rootFolder;
         const cmpContent = FileHelper.componentModel(cmpName, rootFolder, isLone);
         const isValidDir = dirPath != '' && dirPath != undefined;
         const cmpDirPath = isValidDir ? dirPath : '';
@@ -120,7 +120,7 @@ export class FileHelper {
         fs.writeFileSync(`${cmpFullPath}`, cmpContent);
 
         return cmpFullPath;
-
+        HomeComponent
     }
 
     static isItRootFolder(spinner, cmdObj, showLog = true, forLone = false) {

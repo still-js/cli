@@ -255,12 +255,9 @@ export class StillCmd {
                 } = await FileHelper.parseDirTree(cmpPath, cmpName);
 
                 try {
-
+                    if (FileHelper.stillProjectExists()) filePath = 'app/' + filePath;
                     const cmpFullPath = `${filePath}/${cmpName}.js`;
-                    FileHelper.createComponentFile(
-                        cmpName, rootFolder, dirPath, fileName
-                    );
-
+                    FileHelper.createComponentFile(cmpName, rootFolder, dirPath, fileName);
                     spinnerObj.success(`Component ${cmpFullPath} created successfully`);
 
                     const routeSpinner = yocto({ text: `Creating the route` }).start();
