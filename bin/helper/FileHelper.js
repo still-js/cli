@@ -91,13 +91,6 @@ export class FileHelper {
         + '\t\t\t' + cmpName + '  auto generated content\n'
         + '\t\t</h1>'
         + '\n\t`;\n'
-        + '\n'
-        + '\tconstructor(){\n'
-        + '\t\tsuper();'
-        + '\n'
-        + '\t}\n'
-        + '\n'
-        + '\n'
         + '}';
 
 
