@@ -226,7 +226,7 @@ export class StillCmd {
         this.newCmdLine();
         const spinner = yocto({ text: `Creating new component ${opts.name}` }).start();
         const isRootFolder = FileHelper.isItRootFolder(spinner, this, false).flag;
-
+        const cmpPathParam = cmpPath?.join('/');
         if (isRootFolder && cmpPath[0] != 'app' && !opts.isLone)
             return FileHelper.wrongFolderCmpCreationError(spinner, this);
 
@@ -248,14 +248,17 @@ export class StillCmd {
                     return;
                 }
 
-                const rootFolder = StillCmd.stillProjectRootDir.join('/');
+                let rootFolder = StillCmd.stillProjectRootDir.join('/');
                 const {
                     dirPath,
                     fileName
                 } = await FileHelper.parseDirTree(cmpPath, cmpName);
 
                 try {
-                    if (FileHelper.stillProjectExists()) filePath = 'app/' + filePath;
+
+                    if (FileHelper.stillProjectExists()) {
+                        filePath = cmpPathParam, rootFolder = '../' + rootFolder;
+                    }
                     const cmpFullPath = `${filePath}/${cmpName}.js`;
                     FileHelper.createComponentFile(cmpName, rootFolder, dirPath, fileName);
                     spinnerObj.success(`Component ${cmpFullPath} created successfully`);
