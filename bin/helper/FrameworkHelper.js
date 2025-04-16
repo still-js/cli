@@ -135,6 +135,8 @@ export class FrameworkHelper {
                 cpSync(`${projectName}/node_modules/@stilljs/core/`, `${projectName}/../`, { recursive: true });
                 rmSync(`${projectName}/node_modules/`, { recursive: true });
                 rmSync(`${projectName}`, { recursive: true });
+                rmSync(`jsconfig.json`);
+                rmSync(`README.md`);
             } else {
                 cpSync(`${projectName}/node_modules/@stilljs/core/`, `${projectName}/../`, { recursive: true });
                 rmSync(`${projectName}/node_modules/`, { recursive: true });

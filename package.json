@@ -1,6 +1,6 @@
 {
   "name": "@stilljs/cli",
-  "version": "1.7.11",
+  "version": "1.7.12",
   "description": "This is the CLI tool for StillJS Framework",
   "main": "./bin/index.js",
   "scripts": {
