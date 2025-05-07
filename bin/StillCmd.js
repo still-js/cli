@@ -255,13 +255,13 @@ export class StillCmd {
 
                 try {
 
-                    if (FileHelper.stillProjectExists()) {
-                        filePath = cmpPathParam, rootFolder = rootFolder;
-                    }
-                    if(!createdFolder && isRootFolder) {
-                        const totalFolders = cmpPathParam.split('/').length - 1;
-                        rootFolder = '../' + '/'.repeat(totalFolders).split('').join('..');
-                    }
+                    if (FileHelper.stillProjectExists()) filePath = cmpPathParam;
+                    
+                    if(isRootFolder) {
+                        const totalFolders = cmpPathParam.split('/').length;
+                        rootFolder =  '/'.repeat(totalFolders).split('').join('..');                        
+                    } 
+
                     const cmpFullPath = `${filePath}/${cmpName}.js`;
                     FileHelper.createComponentFile(cmpName, rootFolder, dirPath, fileName);
                     spinnerObj.success(`Component ${cmpFullPath} created successfully`);

@@ -4,7 +4,7 @@ This log contains all the changes which takes place for StillJS CLI tools.
  
 
 ## [Released] - 2025-05-06
-## [Version] - 1.7.13
+## [Version] - 1.7.14
 Fix ViewComponent import path generation when generating a component.
 
 <br>
