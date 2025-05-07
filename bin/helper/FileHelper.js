@@ -57,7 +57,7 @@ export class FileHelper {
 
     static async parseDirTree(cmpPath, cmpName) {
 
-        let folder, dirPath;
+        let folder, dirPath, createdFolder;
 
         if (cmpPath != '') {
             folder = cmpPath.shift();
@@ -65,9 +65,10 @@ export class FileHelper {
         }
 
         while (folder) {
-
-            const folderExists = fs.existsSync(dirPath);
-            if (!folderExists) fs.mkdirSync(dirPath);
+            if (!fs.existsSync(dirPath)) {
+                fs.mkdirSync(dirPath);
+                createdFolder = true;
+            };
 
             folder = cmpPath.shift();
             if (folder) dirPath = `${dirPath}/${folder}`;
@@ -75,7 +76,7 @@ export class FileHelper {
         }
 
         const fileName = String(cmpName[0]).toUpperCase() + String(cmpName.slice(1));
-        return { dirPath, fileName }
+        return { dirPath, fileName, createdFolder }
 
 
     }
@@ -97,7 +98,7 @@ export class FileHelper {
     static componentModel(cmpName, importPath, isLone) {
         let superClsPath = '';
         if (!isLone) {
-            superClsPath = `"${importPath}/@still/component/super/ViewComponent.js";`;
+            superClsPath = `"${importPath}/@still/component/super/ViewComponent.js";`.replace(/\/\//g,'/');
             superClsPath = `import { ViewComponent } from ${superClsPath}\n\n`;
         }
         return FileHelper.componentTemplate(cmpName, superClsPath);
@@ -111,23 +112,18 @@ export class FileHelper {
         const cmpFullPath = `${isValidDir ? cmpDirPath + '/' : ''}${fileName}.js`;
 
         fs.writeFileSync(`${cmpFullPath}`, cmpContent);
-
         return cmpFullPath;
-        HomeComponent
     }
 
     static isItRootFolder(spinner, cmdObj, showLog = true, forLone = false) {
 
         const { flag, actualDir } = FileHelper.wasRootFolderReached(process.cwd(), forLone);
-
         if (flag) {
             if (showLog)
                 FileHelper.wrongFolderCmpCreationError(spinner, cmdObj);
             return { flag, actualDir };
         }
-
         return { flag, actualDir };
-
     }
 
 
