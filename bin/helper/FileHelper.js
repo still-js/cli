@@ -6,7 +6,7 @@ import { sleepFor } from '../util/time.js';
 export class FileHelper {
 
     static rootFiles = [
-        '@still', 'app-setup.js', 'app-template.js', 'index.html', 'route.map.js'
+        '@still', 'app', 'config', 'index.html'
     ];
 
     static rootFilesForLone = [

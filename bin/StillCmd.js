@@ -423,7 +423,7 @@ export class StillCmd {
             return FileHelper.noLoneProjectFolderError(spinner, this);
 
         if (fileMetadata?.isRootFolder && fileMetadata?.isLone)
-            return await cb({ ...fileMetadata, routeFile: `${process.env.PWD}/route.map.js` }, spinner);
+            return await cb({ ...fileMetadata, routeFile: `${process.env.PWD}/config/route.map.js` }, spinner);
 
         if (callNum == 10)
             return FileHelper.noStillProjectFolderError(spinner, this);
@@ -451,7 +451,7 @@ export class StillCmd {
             this.cmdMessage(` -- Validated Still.js project folder`);
             yocto().start().success(`Found project root folder`);
             fileMetadata = { ...fileMetadata, filePath, wrongProjectType };
-            await cb({ ...fileMetadata, routeFile: `${actualDir}/route.map.js` }, spinner);
+            await cb({ ...fileMetadata, routeFile: `${actualDir}/config/route.map.js` }, spinner);
         } else {
             StillCmd.stillProjectRootDir.push('..');
             await this.getRootDirThenRunCallback(fileMetadata, spinner, `${actualDir}/..`, cb, (callNum + 1), countFolderBack);
