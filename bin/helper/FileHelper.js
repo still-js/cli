@@ -130,6 +130,25 @@ export class FileHelper {
         return { flag, actualDir };
     }
 
+    static setLoneHomeCmpContent = () =>
+        + ''
+        + 'export class HomeComponent extends ViewComponent {\n\n'
+        + '\tisPublic = true;'
+        + '\n\n'
+        + '\ttemplate = `\n'
+        + '\t\t<div class="itWorked still-worked-home-container">\n'
+        + '\t\t\t<h1><u>Still.js Microfrontend Project</u></h1>\n'
+        + '\t\t\t<h2 class="still-fw-before-logo">Still.js Framework</h2>\n'
+        + '\t\t\t<h1>It Worked</h1>\n'
+        + '\t\t\t<p class="still-home-orientation-text">\n'
+        + '\t\t\t\tThis is the HomeComponent, go to \n'
+        + '\t\t\t\t<b>app/home/HomeComponent&#46;js</b> path<br>\n'
+        + '\t\t\t\tand do you adjustments accordingly\n'
+        + '\t\t\t</p>\n'
+        + '\t\t</div>\n'
+        + '\t`;'
+        + '\n}';
+    
 
     static wrongFolderCmpCreationError(spinner, cmdObj, forLone = false) {
 

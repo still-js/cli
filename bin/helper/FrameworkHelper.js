@@ -1,5 +1,5 @@
 import { exec, execSync, spawn } from 'child_process';
-import { cpSync, rmSync } from 'fs';
+import { cpSync, rmSync, writeFileSync } from 'fs';
 import { platform } from 'os';
 import colors from 'yoctocolors';
 import { StillCmd } from '../StillCmd.js';
@@ -143,15 +143,19 @@ export class FrameworkHelper {
             }
             if (forLone) {
 
+                writeFileSync(`${projectName}/../app/home/HomeComponent.js`,FileHelper.setLoneHomeCmpContent().replace(0,''),'utf-8');
                 rmSync(`${projectName}/../@still/`, { recursive: true });
-                rmSync(`${projectName}/../app-setup.js`, { recursive: true });
-                rmSync(`${projectName}/../app-template.js`, { recursive: true });
-                rmSync(`${projectName}/../jsconfig.json`, { recursive: true });
-                rmSync(`${projectName}/../package.json`, { recursive: true });
-                rmSync(`${projectName}/../README.md`, { recursive: true });
                 rmSync(`${projectName}/../index.html`, { recursive: true });
-                rmSync(`${projectName}/`, { recursive: true });
+                rmSync(`${projectName}/../package.json`, { recursive: true });
+                rmSync(`${projectName}/../jsconfig.json`, { recursive: true });
+                rmSync(`${projectName}/../README.md`, { recursive: true });
+                rmSync(`${projectName}/../config/app-setup.js`, { recursive: true });
+                rmSync(`${projectName}/../config/app-template.js`, { recursive: true });
 
+                try {
+                    rmSync(`${projectName}/`, { recursive: true });
+                } catch (error) {}
+                
             }
             return true;
         } catch (error) {
