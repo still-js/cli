@@ -10,12 +10,16 @@ export class FileHelper {
     ];
 
     static rootFilesForLone = [
-        'app', 'route.map.js'
+        'app', 'config', 'config/route.map.js'
     ];
 
     static loneProjectExists() {
-        return FileHelper.rootFilesForLone.filter(r => fs.existsSync(`${process.env.PWD}/${r}`)).length
-            === FileHelper.rootFilesForLone.length
+        const routeFile = FileHelper.rootFilesForLone.slice(-1)[0];
+        const isValidProject = fs.existsSync(`${process.env.PWD}/${routeFile}`);
+        const totalFilesWithNoRouteFile = FileHelper.rootFilesForLone.length - 1;
+        
+        return FileHelper.rootFilesForLone.slice(0,2).filter(r => fs.existsSync(`${process.env.PWD}/${r}`)).length
+            === totalFilesWithNoRouteFile && isValidProject;
     }
 
     static stillProjectExists() {
@@ -27,10 +31,10 @@ export class FileHelper {
 
         let wrongProjectType = false, foundLone = false;
         const rootFolderStat = forLoneCmp
-            ? FileHelper.rootFilesForLone
+            ? FileHelper.rootFilesForLone.slice(0,2)
             : FileHelper.rootFiles;
 
-        const files = fs.readdirSync(actualDir);
+        const files = fs.readdirSync(actualDir);        
 
         let counter = 0, wrongCounter = 0;
         for (const file of files) {

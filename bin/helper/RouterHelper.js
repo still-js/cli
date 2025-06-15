@@ -118,7 +118,7 @@ export class RouterHelper {
 
         const re = componentRe.source + complementRe.source;
         const componentExists = routesContent.match(new RegExp(re));
-
+        
         return componentExists;
 
     }

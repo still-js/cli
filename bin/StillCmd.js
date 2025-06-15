@@ -209,8 +209,8 @@ export class StillCmd {
         }
 
         if (opts.isLone) {
-            if (FileHelper.stillProjectExists())
-                return this.wrongProjectTypeWarning('still');
+            if (FileHelper.stillProjectExists() || !FileHelper.loneProjectExists())
+                return this.wrongProjectTypeWarning('lone');
             this.createLoneComponent(opts, cmpName, cmpPath);
         }
         else {
