@@ -82,7 +82,6 @@ export class FileHelper {
         const fileName = String(cmpName[0]).toUpperCase() + String(cmpName.slice(1));
         return { dirPath, fileName, createdFolder }
 
-
     }
 
     static componentTemplate = (cmpName, superClsPath) =>
@@ -197,7 +196,48 @@ export class FileHelper {
             + '\n\n\t-  and then inside the folder structure create a new component typing ' + colors.bold(colors.green('npx still create component app/path-to/MyComponent'))
         );
         cmdObj.newCmdLine();
-
     }
+
+    static readFile = (path) => fs.readFileSync(path,{ encoding: 'utf-8' });
+
+    static getConfig = (configPath,  path, spinner = null, cmdObj = null) => {
+        const route = 'route.map.js', config = 'settings/default.json';
+        const newPath = path.replace(route,config);
+        const fileContent = JSON.parse(FileHelper.readFile(newPath));
+        global.fileContent = fileContent;
+
+        const svcPath = eval(`fileContent.${configPath}`);
+        if(svcPath === undefined) {
+            cmdObj.newCmdLine();
+            spinner.error(colors.bold(colors.red(`config path (${configPath}) does not exists`)));
+        }
+        else{
+            const config = 'config/route.map.js'; 
+            const servicesFldr = path.replace(config,`app/${svcPath}`);
+            return FileHelper.readDirTree(servicesFldr);   
+        }
+        
+    }
+
+    static backendFiles = [];
+    static readDirTree(dirPath){
+        if (fs.existsSync(dirPath)) {
+            const result = fs.readdirSync(dirPath);
+            for(const file of result){
+                if(file.endsWith('.js')){
+                    FileHelper.backendFiles.push(dirPath+file);
+                }else{
+                    FileHelper.readDirTree(dirPath+file+'/');
+                }
+            }
+        };
+        return FileHelper.backendFiles;
+    }
+
+    static readServiceFile(filePath){
+        const service = fs.readFileSync(filePath, { encoding: 'utf-8' });
+        return service; 
+    }
+
 
 }
