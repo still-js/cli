@@ -5,6 +5,9 @@ import colors from 'yoctocolors';
 import { FileHelper } from './helper/FileHelper.js';
 import { FrameworkHelper } from './helper/FrameworkHelper.js';
 import { RouterHelper } from './helper/RouterHelper.js';
+import { BFFHelper } from './helper/BFFHelper.js';
+import { fileURLToPath } from 'url';
+import { spawn } from 'child_process';
 
 export class StillCmd {
 
@@ -93,7 +96,7 @@ export class StillCmd {
         (async () => await this.cmd(opts))();
     }
 
-    /** @param { { create, install, routes } } opts */
+    /** @param { { create, install, routes, app, bff } } opts */
     async cmd(opts) {
 
         if (opts.create) await this.create(opts);
@@ -102,7 +105,7 @@ export class StillCmd {
 
         else if (opts.route) await this.listRoutes(opts);
 
-        else if (opts.app) await this.runAppOperation(opts);
+        else if (opts.app) await this.runAppOperation(opts);        
 
         else this.showGenericHelp();
 
@@ -485,7 +488,6 @@ export class StillCmd {
             spinner.start().error(`Failed to start the server`);
             this.newCmdLine();
         }
-
     }
 
     async listRoutes(opts) {
@@ -544,15 +546,50 @@ export class StillCmd {
             opts = { app, action };
         }
 
-        if (command[0] == 'install' || command[0] == 'i') {
-            opts = {
-                'install': command[0],
-                arguments: command.slice(1).join(' '),
-                pkg: command[1]
-            };
-        }
+        if (command[0] == 'install' || command[0] == 'i') 
+            opts = { 'install': command[0], arguments: command.slice(1).join(' '), pkg: command[1]};
 
         return opts;
+    }
+
+
+    async backendFrontend(opts) {
+        StillCmd.silentConsoleLog = false;
+        
+        const spinner = yocto();
+        spinner.text = `Generating the Backend`;
+        spinner.start();
+            
+        await this.getRootDirThenRunCallback(null, spinner, null,
+            async ({ routeFile }) => {
+
+                const homeDir = routeFile.replace('config/route.map.js','');
+
+                if(opts.action === 'generate'){
+                    const execDir = fileURLToPath(import.meta.url).replace('bin/StillCmd.js','bff-template/');
+                    const services = FileHelper.getConfig('path.service', routeFile, spinner, this);
+                    BFFHelper.parseServices(services, {homeDir, execDir}, spinner, this);
+                }else{
+
+                    let cmd = `docker compose -f ${homeDir}bff-app/docker-compose.yml `, cmdObj;
+                    
+                    if(opts.action === 'up') cmd += 'up';
+                    if(opts.action === 'down') cmd += 'down';
+
+                    cmdObj = spawn(`${cmd}`, [], { shell: true });
+                    cmdObj.stdout.setEncoding('utf8');
+                    cmdObj.stderr.setEncoding('utf8');
+                    
+                    cmdObj.stdout.on('data', (data) => process.stdout.write(data));
+                    cmdObj.stderr.on('data', (data) => process.stderr.write(data));
+
+                }
+            }
+        );
+                    
+        spinner.stop();
+        StillCmd.silentConsoleLog = true;
+        
     }
 
 }

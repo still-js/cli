@@ -1,5 +1,5 @@
 import { exec, execSync, spawn } from 'child_process';
-import { cpSync, rmSync } from 'fs';
+import { cpSync, rmSync, writeFileSync } from 'fs';
 import { platform } from 'os';
 import colors from 'yoctocolors';
 import { StillCmd } from '../StillCmd.js';
@@ -58,38 +58,42 @@ export class FrameworkHelper {
 
             if (!noFromOutside) {
 
-                let _global = '';
-                let enterFolderCmd = `cd ./${projectName}`
+                if(projectName !== null){
 
-                if (pkg == 'live-server') _global = '-g';
-                if (pkg != 'live-server' && pkg != '@stilljs/core')
-                    enterFolderCmd = null;
+                    let _global = '';
+                    let enterFolderCmd = `cd ./${projectName}`
+    
+                    if (pkg == 'live-server') _global = '-g';
+                    if (pkg != 'live-server' && pkg != '@stilljs/core')
+                        enterFolderCmd = null;
+    
+                    const complement = `${enterFolderCmd != null ? enterFolderCmd + ' && ' : ''}`;
+                    const iProcess = spawn(
+                        `${complement} npm i ${pkg} ${_global}`, [], { shell: true }
+                    );
+    
+                    iProcess.stdout.setEncoding('utf8');
+                    iProcess.stderr.setEncoding('utf8');
+    
+                    iProcess.stdout.on('data', (data) => {
+                        process.stdout.write(data);
+                    });
+    
+                    iProcess.stderr.on('data', (data) => {
+                        process.stdout.write(data);
+                        resolve(false);
+                    });
+    
+                    iProcess.stdout.on('end', (data) => {
+    
+                        if (pkg == '@stilljs/core')
+                            FrameworkHelper.runInstallStillPkg('live-server');
+    
+                        resolve(true);
+    
+                    });
 
-                const complement = `${enterFolderCmd != null ? enterFolderCmd + ' && ' : ''}`;
-                const iProcess = spawn(
-                    `${complement} npm i ${pkg} ${_global}`, [], { shell: true }
-                );
-
-                iProcess.stdout.setEncoding('utf8');
-                iProcess.stderr.setEncoding('utf8');
-
-                iProcess.stdout.on('data', (data) => {
-                    process.stdout.write(data);
-                });
-
-                iProcess.stderr.on('data', (data) => {
-                    process.stdout.write(data);
-                    resolve(false);
-                });
-
-                iProcess.stdout.on('end', (data) => {
-
-                    if (pkg == '@stilljs/core')
-                        FrameworkHelper.runInstallStillPkg('live-server');
-
-                    resolve(true);
-
-                });
+                }
 
             }
         });
@@ -143,15 +147,19 @@ export class FrameworkHelper {
             }
             if (forLone) {
 
+                writeFileSync(`${projectName}/../app/home/HomeComponent.js`,FileHelper.setLoneHomeCmpContent().replace(0,''),'utf-8');
                 rmSync(`${projectName}/../@still/`, { recursive: true });
-                rmSync(`${projectName}/../app-setup.js`, { recursive: true });
-                rmSync(`${projectName}/../app-template.js`, { recursive: true });
-                rmSync(`${projectName}/../jsconfig.json`, { recursive: true });
-                rmSync(`${projectName}/../package.json`, { recursive: true });
-                rmSync(`${projectName}/../README.md`, { recursive: true });
                 rmSync(`${projectName}/../index.html`, { recursive: true });
-                rmSync(`${projectName}/`, { recursive: true });
+                rmSync(`${projectName}/../package.json`, { recursive: true });
+                rmSync(`${projectName}/../jsconfig.json`, { recursive: true });
+                rmSync(`${projectName}/../README.md`, { recursive: true });
+                rmSync(`${projectName}/../config/app-setup.js`, { recursive: true });
+                rmSync(`${projectName}/../config/app-template.js`, { recursive: true });
 
+                try {
+                    rmSync(`${projectName}/`, { recursive: true });
+                } catch (error) {}
+                
             }
             return true;
         } catch (error) {
