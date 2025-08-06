@@ -5,6 +5,7 @@ import colors from 'yoctocolors';
 import { FileHelper } from './helper/FileHelper.js';
 import { FrameworkHelper } from './helper/FrameworkHelper.js';
 import { RouterHelper } from './helper/RouterHelper.js';
+import { BFFHelper } from './helper/BFFHelper.js';
 
 export class StillCmd {
 
@@ -38,6 +39,15 @@ export class StillCmd {
         this.program
             .command('serve')
             .description('Run the project and open to in the default browser\n');
+
+
+        this.program
+            .command('bff <action>')
+            .description(
+                'Create a Component as the bellow examples:\n'
+                + '- example1: ' + colors.bold(colors.green('still bff generate')) + ' generates the  backend according to the Services specification\n'
+                + '- example2: ' + colors.bold(colors.green('still bff deploy')) + ' deploys the app (BE + FE) to render \n'
+            );
 
         this.program
             .command('create <type> <name> [args...]')
@@ -93,7 +103,7 @@ export class StillCmd {
         (async () => await this.cmd(opts))();
     }
 
-    /** @param { { create, install, routes } } opts */
+    /** @param { { create, install, routes, app, bff } } opts */
     async cmd(opts) {
 
         if (opts.create) await this.create(opts);
@@ -103,6 +113,9 @@ export class StillCmd {
         else if (opts.route) await this.listRoutes(opts);
 
         else if (opts.app) await this.runAppOperation(opts);
+        
+        else if (opts.bff) await this.backendFrontend(opts);
+        
 
         else this.showGenericHelp();
 
@@ -485,7 +498,6 @@ export class StillCmd {
             spinner.start().error(`Failed to start the server`);
             this.newCmdLine();
         }
-
     }
 
     async listRoutes(opts) {
@@ -544,15 +556,32 @@ export class StillCmd {
             opts = { app, action };
         }
 
-        if (command[0] == 'install' || command[0] == 'i') {
-            opts = {
-                'install': command[0],
-                arguments: command.slice(1).join(' '),
-                pkg: command[1]
-            };
-        }
+        if (command[0] == 'install' || command[0] == 'i') 
+            opts = { 'install': command[0], arguments: command.slice(1).join(' '), pkg: command[1]};
 
+        if (command[0] === 'bff' || command[0] === 'backend') {
+            opts = { bff: command[0], action: command.slice(1).join(' ') };
+        }
         return opts;
+    }
+
+
+    async backendFrontend(opts) {
+
+        const spinner = yocto();
+        spinner.text = `Generating the Backend`;
+        spinner.start();
+        
+        await this.getRootDirThenRunCallback(null, spinner, null,
+            async ({ routeFile }) => {
+                StillCmd.silentConsoleLog = false;
+                const services = FileHelper.getConfig('path.service', routeFile, spinner, this);
+                BFFHelper.parseServices(services);
+            }
+        );
+        spinner.stop();
+        //StillCmd.silentConsoleLog = false;
+        
     }
 
 }
