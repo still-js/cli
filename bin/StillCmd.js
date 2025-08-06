@@ -42,15 +42,6 @@ export class StillCmd {
             .command('serve')
             .description('Run the project and open to in the default browser\n');
 
-
-        this.program
-            .command('bff <action>')
-            .description(
-                'Create a Component as the bellow examples:\n'
-                + '- example1: ' + colors.bold(colors.green('still bff generate')) + ' generates the  backend according to the Services specification\n'
-                + '- example2: ' + colors.bold(colors.green('still bff deploy')) + ' deploys the app (BE + FE) to render \n'
-            );
-
         this.program
             .command('create <type> <name> [args...]')
             .option('--lone', 'instruction for Lone Component generation')
@@ -114,10 +105,7 @@ export class StillCmd {
 
         else if (opts.route) await this.listRoutes(opts);
 
-        else if (opts.app) await this.runAppOperation(opts);
-        
-        else if (opts.bff) await this.backendFrontend(opts);
-        
+        else if (opts.app) await this.runAppOperation(opts);        
 
         else this.showGenericHelp();
 
@@ -561,9 +549,6 @@ export class StillCmd {
         if (command[0] == 'install' || command[0] == 'i') 
             opts = { 'install': command[0], arguments: command.slice(1).join(' '), pkg: command[1]};
 
-        if (command[0] === 'bff' || command[0] === 'backend') {
-            opts = { bff: command[0], action: command.slice(1).join(' ') };
-        }
         return opts;
     }
 

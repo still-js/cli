@@ -58,38 +58,42 @@ export class FrameworkHelper {
 
             if (!noFromOutside) {
 
-                let _global = '';
-                let enterFolderCmd = `cd ./${projectName}`
+                if(projectName !== null){
 
-                if (pkg == 'live-server') _global = '-g';
-                if (pkg != 'live-server' && pkg != '@stilljs/core')
-                    enterFolderCmd = null;
+                    let _global = '';
+                    let enterFolderCmd = `cd ./${projectName}`
+    
+                    if (pkg == 'live-server') _global = '-g';
+                    if (pkg != 'live-server' && pkg != '@stilljs/core')
+                        enterFolderCmd = null;
+    
+                    const complement = `${enterFolderCmd != null ? enterFolderCmd + ' && ' : ''}`;
+                    const iProcess = spawn(
+                        `${complement} npm i ${pkg} ${_global}`, [], { shell: true }
+                    );
+    
+                    iProcess.stdout.setEncoding('utf8');
+                    iProcess.stderr.setEncoding('utf8');
+    
+                    iProcess.stdout.on('data', (data) => {
+                        process.stdout.write(data);
+                    });
+    
+                    iProcess.stderr.on('data', (data) => {
+                        process.stdout.write(data);
+                        resolve(false);
+                    });
+    
+                    iProcess.stdout.on('end', (data) => {
+    
+                        if (pkg == '@stilljs/core')
+                            FrameworkHelper.runInstallStillPkg('live-server');
+    
+                        resolve(true);
+    
+                    });
 
-                const complement = `${enterFolderCmd != null ? enterFolderCmd + ' && ' : ''}`;
-                const iProcess = spawn(
-                    `${complement} npm i ${pkg} ${_global}`, [], { shell: true }
-                );
-
-                iProcess.stdout.setEncoding('utf8');
-                iProcess.stderr.setEncoding('utf8');
-
-                iProcess.stdout.on('data', (data) => {
-                    process.stdout.write(data);
-                });
-
-                iProcess.stderr.on('data', (data) => {
-                    process.stdout.write(data);
-                    resolve(false);
-                });
-
-                iProcess.stdout.on('end', (data) => {
-
-                    if (pkg == '@stilljs/core')
-                        FrameworkHelper.runInstallStillPkg('live-server');
-
-                    resolve(true);
-
-                });
+                }
 
             }
         });
