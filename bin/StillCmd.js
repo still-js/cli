@@ -6,6 +6,8 @@ import { FileHelper } from './helper/FileHelper.js';
 import { FrameworkHelper } from './helper/FrameworkHelper.js';
 import { RouterHelper } from './helper/RouterHelper.js';
 import { BFFHelper } from './helper/BFFHelper.js';
+import { fileURLToPath } from 'url';
+import { spawn } from 'child_process';
 
 export class StillCmd {
 
@@ -567,20 +569,41 @@ export class StillCmd {
 
 
     async backendFrontend(opts) {
-
+        StillCmd.silentConsoleLog = false;
+        
         const spinner = yocto();
         spinner.text = `Generating the Backend`;
         spinner.start();
-        
+            
         await this.getRootDirThenRunCallback(null, spinner, null,
             async ({ routeFile }) => {
-                StillCmd.silentConsoleLog = false;
-                const services = FileHelper.getConfig('path.service', routeFile, spinner, this);
-                BFFHelper.parseServices(services);
+
+                const homeDir = routeFile.replace('config/route.map.js','');
+
+                if(opts.action === 'generate'){
+                    const execDir = fileURLToPath(import.meta.url).replace('bin/StillCmd.js','bff-template/');
+                    const services = FileHelper.getConfig('path.service', routeFile, spinner, this);
+                    BFFHelper.parseServices(services, {homeDir, execDir}, spinner, this);
+                }else{
+
+                    let cmd = `docker compose -f ${homeDir}bff-app/docker-compose.yml `, cmdObj;
+                    
+                    if(opts.action === 'up') cmd += 'up';
+                    if(opts.action === 'down') cmd += 'down';
+
+                    cmdObj = spawn(`${cmd}`, [], { shell: true });
+                    cmdObj.stdout.setEncoding('utf8');
+                    cmdObj.stderr.setEncoding('utf8');
+                    
+                    cmdObj.stdout.on('data', (data) => process.stdout.write(data));
+                    cmdObj.stderr.on('data', (data) => process.stderr.write(data));
+
+                }
             }
         );
+                    
         spinner.stop();
-        //StillCmd.silentConsoleLog = false;
+        StillCmd.silentConsoleLog = true;
         
     }
 
