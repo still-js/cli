@@ -1,10 +1,13 @@
 import { FileHelper } from "./FileHelper.js"
+import colors from 'yoctocolors';
 
 
 export class BFFHelper {
 
-    static parseServices(servicesList = []){
+    static parseServices(servicesList = [], {homeDir = null, execDir = null}, spinner = null, cmdObj = null){
 
+        const result = BFFHelper.createBffDir({homeDir, execDir}, spinner, cmdObj);
+        if(!result) return;
         const RE = BFFRegex.getRE();
 
         for(let item of servicesList){
@@ -45,6 +48,18 @@ export class BFFHelper {
 
     }
 
+    static createBffDir = ({homeDir, execDir}, spinner = null, cmdObj) => {
+        try { 
+            FileHelper.createFolder(homeDir+'bff-app');
+            FileHelper.copyFolder(execDir, homeDir+'bff-app');
+            return true;
+        } catch (error) {
+            cmdObj.newCmdLine();
+            spinner.error(colors.bold(colors.red(`Bff project already exists, if you which to regenerate remove it manually.`)));
+            cmdObj.newCmdLine();
+            return false;
+        }
+    }
 }
 
 

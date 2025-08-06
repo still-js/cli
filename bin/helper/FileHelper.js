@@ -234,10 +234,11 @@ export class FileHelper {
         return FileHelper.backendFiles;
     }
 
-    static readServiceFile(filePath){
-        const service = fs.readFileSync(filePath, { encoding: 'utf-8' });
-        return service; 
-    }
+    static readServiceFile = (filePath) =>
+        fs.readFileSync(filePath, { encoding: 'utf-8' });
+    
+    static createFolder = (path) => fs.mkdirSync(path);
 
+    static copyFolder = (src, dst) => fs.cpSync(src, dst, { recursive: true });
 
 }
